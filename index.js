@@ -138,7 +138,7 @@ async function updateWorkItem(workItemId, env) {
                 {
                     op: "add",
                     path: "/fields/System.State",
-                    value: env.prOpenState
+                    value: env.propenstate
                 },
                 {
                     op: "add",
@@ -154,7 +154,7 @@ async function updateWorkItem(workItemId, env) {
                     (project = env.project),
                     (validateOnly = false)
                     );
-            console.log("Work Item " + workItemId + " state is updated to " + env.prOpenState);     
+            console.log("Work Item " + workItemId + " state is updated to " + env.propenstate);     
         }
 
         return workItemSaveResult;
@@ -175,7 +175,7 @@ function getValuesFromPayload(payload,env)
             ghrepo: env.gh_repo != undefined ? env.gh_repo :"",
             pull_number: env.pull_number != undefined ? env.pull_number :"",
             closedstate: env.closedstate != undefined ? env.closedstate :"",
-            prOpenState: env.prOpenState != undefined ? env.prOpenState :"",
+            propenstate: env.propenstate != undefined ? env.propenstate :"",
 	        ghtoken: env.gh_token != undefined ? env.gh_token :""
         }
     }
