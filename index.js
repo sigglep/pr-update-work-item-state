@@ -15,7 +15,6 @@ function main () {
     let vm = [];
 
     vm = getValuesFromPayload(github.context.payload,env);
-
     console.log(vm);
 
    if(vm.action == "closed") //opened - opened / closed + merged == true - merged / closed - closed
@@ -89,6 +88,7 @@ async function isMerged(env) {
 
 async function updateWorkItem(workItemId, env) {
     let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(env.adoToken);
+    console.log("ENV:" + env);
     console.log("URL:" + env.orgurl);
     let connection = new azureDevOpsHandler.WebApi(env.orgurl, authHandler);
     let client = await connection.getWorkItemTrackingApi();
