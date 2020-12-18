@@ -97,6 +97,7 @@ async function updateWorkItem(workItemId, env) {
     console.log("ADO URL: " + "https://dev.azure.com/" + env.ado_organization);
     let connection = new azureDevOpsHandler.WebApi("https://dev.azure.com/" + env.ado_organization, authHandler);
     let client = await connection.getWorkItemTrackingApi();
+    console.log("ADO WorkItemId: " + workItemId);
     var workItem = await client.getWorkItem(workItemId);
     var currentDescription = String (workItem.fields["System.Description"]);
     var currentState = workItem.fields["System.State"];
