@@ -42,7 +42,9 @@ async function getWorkItemIdFromPrTitle(env) {
         const result = await response.json();
 
         var pullRequestTitle = result.title;
-        var workItemId = pullRequestTitle.match(/(AB#)[0-9]*/g)[0];
+        var found = pullRequestTitle.match(/(AB#)[0-9]*/g);
+        console.log("REGEX: " + found)
+        var workItemId = found[0];
         return workItemId;
     } catch (err){
         core.setFailed(err);
@@ -88,7 +90,6 @@ async function isMerged(env) {
 
 async function updateWorkItem(workItemId, env) {
     let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(env.adoToken);
-    console.log("URL: " + "https://dev.azure.com/" + env.ado_organization);
     let connection = new azureDevOpsHandler.WebApi("https://dev.azure.com/" + env.ado_organization, authHandler);
     let client = await connection.getWorkItemTrackingApi();
     var workItem = await client.getWorkItem(workItemId);
