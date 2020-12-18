@@ -6,8 +6,8 @@ const fetch = require("node-fetch");
 global.Headers = fetch.Headers;
 
 
-main();
-function main () {
+await main();
+async function main () {
   
     const env = process.env
     const context = github.context; 
@@ -19,11 +19,11 @@ function main () {
 
    if(vm.action == "closed") //opened - opened / closed + merged == true - merged / closed - closed
    {
-       var workItemId = getWorkItemIdFromPrTitle(env);
-       updateWorkItem(workItemId, env);
+       var workItemId = await getWorkItemIdFromPrTitle(env);
+       await updateWorkItem(workItemId, env);
    } else if (vm.action == "opened") {
-        var workItemId = getWorkItemIdFromPrTitle(env);
-        updateWorkItem(workItemId, env);
+        var workItemId = await getWorkItemIdFromPrTitle(env);
+        await updateWorkItem(workItemId, env);
    } else {
         core.setFailed();
    }
