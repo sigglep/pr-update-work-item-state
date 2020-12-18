@@ -17,16 +17,13 @@ async function main () {
     vm = getValuesFromPayload(github.context.payload,env);
     console.log(vm);
 
-   if(vm.action == "closed") //opened - opened / closed + merged == true - merged / closed - closed
-   {
-       var workItemId = await getWorkItemIdFromPrTitle(env);
-       await updateWorkItem(workItemId, env);
-   } else if (vm.action == "opened") {
+    try {
         var workItemId = await getWorkItemIdFromPrTitle(env);
         await updateWorkItem(workItemId, env);
-   } else {
+    } catch (err) {
+        console.log(err);
         core.setFailed();
-   }
+    }
 }
 
 async function getWorkItemIdFromPrTitle(env) {
@@ -91,6 +88,25 @@ async function isMerged(env) {
     return false;
 }
 
+async function isClosed(env) {
+    let h = new Headers();
+    let auth = 'token ' + env.gh_token;
+    h.append ('Authorization', auth );
+    try {   
+        const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;    
+        const response= await fetch (requestUrl, {
+            method: 'GET', 
+            headers:h
+            })
+        const result = await response.json();
+
+        var pullRequestStatus = result.state;
+        return pullRequestStatus == "closed";
+    } catch (err){
+        core.setFailed(err);
+    }
+}
+
 async function updateWorkItem(workItemId, env) {
     console.log("ADO Token: " + env.ado_token);
     let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(env.ado_token);
@@ -111,7 +127,7 @@ async function updateWorkItem(workItemId, env) {
         let mergeStatus = [];
         let newDescription = [];
 
-        if (await isMerged(env) == true){
+        if (await isMerged(env) == true) {
             console.log("PR IS MERGED");
             mergeStatus = "Linked Pull Request merge is successful";
             newDescription = currentDescription + "<br />" + mergeStatus;               
@@ -136,10 +152,8 @@ async function updateWorkItem(workItemId, env) {
                     (validateOnly = false)
                     );
             console.log("Work Item " + workItemId + " state is updated to " + env.closedstate);         
-        } else {
+        } else if (await isOpened(env) == true) {
             try {
-            var isOpen = await isOpened(env);
-            console.log("isOpen: " + isOpen);
             console.log("PR IS OPENED: " + env.propenstate);
             mergeStatus = "Linked new Pull Request to Azure Boards";
             newDescription = currentDescription + "<br />" + mergeStatus;
@@ -167,6 +181,35 @@ async function updateWorkItem(workItemId, env) {
             } catch (err) {
                 console.log(err);
             }
+        } else if (await isClosed(env) == true) {
+            try {
+                console.log("PR IS CLOSED: " + env.inprogressstate);
+                mergeStatus = "Pull request was rejected";
+                newDescription = currentDescription + "<br />" + mergeStatus;
+                let patchDocument = [
+                    {
+                        op: "add",
+                        path: "/fields/System.State",
+                        value: env.inprogressstate
+                    },
+                    {
+                        op: "add",
+                        path: "/fields/System.Description",
+                        value: newDescription
+                    }
+                ];
+    
+                workItemSaveResult = await client.updateWorkItem(
+                        (customHeaders = []),
+                        (document = patchDocument),
+                        (id = workItemId),
+                        (project = env.project),
+                        (validateOnly = false)
+                        );
+                console.log("Work Item " + workItemId + " state is updated to " + env.propenstate);     
+                } catch (err) {
+                    console.log(err);
+                }
         }
 
         return workItemSaveResult;
@@ -188,6 +231,7 @@ function getValuesFromPayload(payload,env)
             pull_number: env.pull_number != undefined ? env.pull_number :"",
             closedstate: env.closedstate != undefined ? env.closedstate :"",
             propenstate: env.propenstate != undefined ? env.propenstate :"",
+            inprogressstate: env.inprogressstate != undefined ? env.inprogressstate :"",
 	        gh_token: env.gh_token != undefined ? env.gh_token :""
         }
     }
