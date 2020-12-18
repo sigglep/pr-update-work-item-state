@@ -43,7 +43,7 @@ async function getWorkItemIdFromPrTitle(env) {
         const result = await response.json();
 
         var pullRequestTitle = result.title;
-        var found = pullRequestTitle.match(/[0-9]*/g);
+        var found = pullRequestTitle.match(/[(0-9)]*/g);
         console.log("REGEX: " + found)
         var workItemId = found[0];
         return workItemId;
