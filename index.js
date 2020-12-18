@@ -44,8 +44,9 @@ async function getWorkItemIdFromPrTitle(env) {
 
         var pullRequestTitle = result.title;
         var found = pullRequestTitle.match(/[(0-9)]*/g);
-        console.log("REGEX: " + found)
-        var workItemId = found[0];
+        console.log("REGEX: " + found);
+        var workItemId = found[3];
+        console.log("WorkItem: " + workItemId);
         return workItemId;
     } catch (err){
         core.setFailed(err);
