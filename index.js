@@ -19,64 +19,45 @@ async function main () {
     console.log("Branch name: " + env.branch_name);
 
     try {
-        try{
-            await processPr(env);
-        } catch {
-            await processBranch(env);
-        }
+        var workItemId = await getWorkItemIdFromPrTitleOrBranchName(env);
+        await updateWorkItem(workItemId, env);
     } catch (err) {
         console.log(err);
         core.setFailed();
     }
 }
 
-async function processPr(env){
-    var workItemId = await getWorkItemIdFromPrTitle(env);
-    await updateWorkItem(workItemId, env);
-}
-
-async function processBranch(env) {
-    var workItemId = await getWorkItemFromBranchName(env);
-    await updateWorkItem(workItemId, env);
-}
-
-async function getWorkItemIdFromPrTitle(env) {
+async function getWorkItemIdFromPrTitleOrBranchName(env) {
     let h = new Headers();
     let auth = 'token ' + env.gh_token;
     h.append ('Authorization', auth );
     console.log('Authorization ' + auth);
     try {   
-        const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;
-        console.log("getWorkItemIdFromPrTitle request URL: " + requestUrl);
-        const response= await fetch (requestUrl, {
-            method: 'GET', 
-            headers:h
-            })
-        const result = await response.json();
+        if(env.pull_number != undefined && env.pull_number != "") {
+            console.log("Getting work item ID from PR title");
+            const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;
+            console.log("getWorkItemIdFromPrTitle request URL: " + requestUrl);
+            const response= await fetch (requestUrl, {
+                method: 'GET', 
+                headers:h
+                })
+            const result = await response.json();
 
-        var pullRequestTitle = result.title;
-        var found = pullRequestTitle.match(/[(0-9)]*/g);
-        console.log("REGEX: " + found);
-        var workItemId = found[3];
-        console.log("WorkItem: " + workItemId);
-        return workItemId;
-    } catch (err){
-        core.setFailed(err);
-    }
-}
-
-async function getWorkItemFromBranchName(env) {
-    let h = new Headers();
-    let auth = 'token ' + env.gh_token;
-    h.append ('Authorization', auth );
-    console.log('Authorization ' + auth);
-    try {   
-        var branchName = env.branch_name;
-        var found = branchName.match(/([0-9]+)/g);
-        console.log("REGEX: " + found);
-        var workItemId = found[0];
-        console.log("WorkItem: " + workItemId);
-        return workItemId;
+            var pullRequestTitle = result.title;
+            var found = pullRequestTitle.match(/[(0-9)]*/g);
+            console.log("REGEX: " + found);
+            var workItemId = found[3];
+            console.log("WorkItem: " + workItemId);
+            return workItemId;
+        } else {
+            console.log("Getting work item ID from BRANCH name");
+            var branchName = env.branch_name;
+            var found = branchName.match(/([0-9]+)/g);
+            console.log("REGEX: " + found);
+            var workItemId = found[0];
+            console.log("WorkItem: " + workItemId);
+            return workItemId;
+        }
     } catch (err){
         core.setFailed(err);
     }
