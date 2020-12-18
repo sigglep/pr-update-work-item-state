@@ -15,9 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     name: Test workflow
     steps:       
-    - uses: FranzDiebold/github-env-vars-action@v1.2.0
-      env:
-        ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
     - uses: MarcinGadomski94/pr-update-work-item-state@master
       env: 
         gh_token : '${{ secrets.GH_TOKEN }}'   
