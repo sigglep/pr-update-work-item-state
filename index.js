@@ -89,6 +89,7 @@ async function isMerged(env) {
 
 async function updateWorkItem(workItemId, env) {
     let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(env.adoToken);
+    console.log("URL:" + env.orgurl);
     let connection = new azureDevOpsHandler.WebApi(env.orgurl, authHandler);
     let client = await connection.getWorkItemTrackingApi();
     var workItem = await client.getWorkItem(workItemId);
