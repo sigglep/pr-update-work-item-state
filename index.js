@@ -41,6 +41,7 @@ async function getWorkItemIdFromPrTitle(env) {
 
         var pullRequestTitle = result.title;
         var workItemId = pullRequestTitle.match(/(AB#)[0-9]*/g)[0];
+        console.log("work item: " + workItemId);
         return workItemId;
     } catch (err){
         core.setFailed(err);
@@ -60,6 +61,7 @@ async function isOpened(env) {
         const result = await response.json();
 
         var pullRequestStatus = result.state;
+        console.log("isOpened:" + pullRequestStatus);
         return pullRequestStatus == "open";
     } catch (err){
         core.setFailed(err);
@@ -78,9 +80,11 @@ async function isMerged(env) {
 
     var pullRequestStatus = mergeResponse.status;
     if (pullRequestStatus == "204") {
+        console.log("isMerged: " + "true")
         return true;
     }
 
+    console.log("isMerged: " + "false")
     return false;
 }
 
