@@ -18,10 +18,13 @@ function main () {
 
     console.log(vm);
 
-   if(vm.action == "closed" || vm.action == "opened") //opened - opened / closed + merged == true - merged / closed - closed
+   if(vm.action == "closed") //opened - opened / closed + merged == true - merged / closed - closed
    {
        var workItemId = getWorkItemIdFromPrTitle(env);
        updateWorkItem(workItemId, env);
+   } else if (vm.action == "opened") {
+        var workItemId = getWorkItemIdFromPrTitle(env);
+        updateWorkItem(workItemId, env);
    } else {
         core.setFailed();
    }
