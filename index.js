@@ -64,6 +64,7 @@ async function isOpened(env) {
         const result = await response.json();
 
         var pullRequestStatus = result.state;
+        console.log("Current state: " + pullRequestStatus);
         return pullRequestStatus == "open";
     } catch (err){
         core.setFailed(err);
