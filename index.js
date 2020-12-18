@@ -44,7 +44,6 @@ async function getWorkItemIdFromPrTitle(env) {
 
         var pullRequestTitle = result.title;
         var workItemId = pullRequestTitle.match(/(AB#)[0-9]*/g)[0];
-        console.log("work item: " + workItemId);
         return workItemId;
     } catch (err){
         core.setFailed(err);
@@ -64,7 +63,6 @@ async function isOpened(env) {
         const result = await response.json();
 
         var pullRequestStatus = result.state;
-        console.log("isOpened:" + pullRequestStatus);
         return pullRequestStatus == "open";
     } catch (err){
         core.setFailed(err);
@@ -83,17 +81,15 @@ async function isMerged(env) {
 
     var pullRequestStatus = mergeResponse.status;
     if (pullRequestStatus == "204") {
-        console.log("isMerged: " + "true")
         return true;
     }
 
-    console.log("isMerged: " + "false")
     return false;
 }
 
 async function updateWorkItem(workItemId, env) {
     let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(env.adoToken);
-    let connection = new azureDevOpsHandler.WebApi(env.orgUrl, authHandler);
+    let connection = new azureDevOpsHandler.WebApi(env.orgurl, authHandler);
     let client = await connection.getWorkItemTrackingApi();
     var workItem = await client.getWorkItem(workItemId);
     var currentDescription = String (workItem.fields["System.Description"]);
@@ -171,7 +167,7 @@ function getValuesFromPayload(payload,env)
 
         env : {
             organization: env.ado_organization != undefined ? env.ado_organization : "",
-            orgUrl: env.ado_organization != undefined ? "https://dev.azure.com/" + env.ado_organization : "",
+            orgurl: env.ado_organization != undefined ? "https://dev.azure.com/" + env.ado_organization : "",
             adoToken: env.ado_token != undefined ? env.ado_token : "",
             project: env.ado_project != undefined ? env.ado_project : "",
             ghrepo_owner: env.gh_repo_owner != undefined ? env.gh_repo_owner :"",
