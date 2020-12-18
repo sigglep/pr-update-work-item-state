@@ -147,7 +147,7 @@ async function updateWorkItem(workItemId, env) {
                 {
                     op: "add",
                     path: "/fields/System.State",
-                    value: "Ready"
+                    value: env.propenstate
                 },
                 {
                     op: "add",
