@@ -20,7 +20,7 @@ function main () {
 
    if(vm.action == "closed" || vm.action == "opened") //opened - opened / closed + merged == true - merged / closed - closed
    {
-       var workItemId = getWorkItemIdFromPrTitle();
+       var workItemId = getWorkItemIdFromPrTitle(env);
        updateWorkItem(workItemId, env);
    } else {
         core.setFailed();
