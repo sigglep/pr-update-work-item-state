@@ -112,6 +112,7 @@ async function updateWorkItem(workItemId, env) {
         let newDescription = [];
 
         if (isMerged(env) == true){
+            console.log("PR IS MERGED");
             mergeStatus = "Linked Pull Request merge is successful";
             newDescription = currentDescription + "<br />" + mergeStatus;               
             let patchDocument = [
@@ -136,6 +137,7 @@ async function updateWorkItem(workItemId, env) {
                     );
             console.log("Work Item " + workItemId + " state is updated to " + env.closedstate);         
         } else if (isOpened(env) == true) {
+            console.log("PR IS OPENED");
             mergeStatus = "Linked new Pull Request to Azure Boards";
             newDescription = currentDescription + "<br />" + mergeStatus;
             let patchDocument = [
