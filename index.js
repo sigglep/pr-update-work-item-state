@@ -1,5 +1,5 @@
 
-const azdev = require(`azure-devops-node-api`);
+const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
@@ -18,187 +18,143 @@ function main () {
 
     console.log(vm);
 
-   if(vm.action == "closed")
+   if(vm.action == "closed" || vm.action == "opened") //opened - opened / closed + merged == true - merged / closed - closed
    {
-    	getworkitemid(vm.env);
+       var workItemId = getWorkItemIdFromPrTitle();
+       updateWorkItem(workItemId, env);
    } else {
         core.setFailed();
    }
-    
 }
 
-async function getworkitemid (env) {
-
+async function getWorkItemIdFromPrTitle(env) {
     let h = new Headers();
     let auth = 'token ' + env.ghtoken;
     h.append ('Authorization', auth );
     try {   
-            const requesturl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;    
-            const response= await fetch (requesturl, {
-               method: 'GET', 
-               headers:h
-             })
-            const result = await response.json();
-
-            var pulldetails = result.body;
-
-            var workItemId = pulldetails.substr(4,3);
-
-        } catch (err){
-            core.setFailed(err);
-        }
-    try {
-            const newrequesturl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number+"/merge";    
-            const pullresponse= await fetch (newrequesturl, {
-                method: 'GET', 
-                headers:h
+        const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;    
+        const response= await fetch (requestUrl, {
+            method: 'GET', 
+            headers:h
             })
+        const result = await response.json();
 
-            var pullstatus =pullresponse.status;
-
-            if (workItemId === null)
-            {
-                core.setFailed();
-                console.log("unable to find workitem id, please check if a workitem is linked to pull request");
-                return;
-
-            } else {
-                updateworkitem(workItemId,env,pullstatus);
-            }
-
-        } catch (err){
-            core.setFailed(err.message);
-        }   
+        var pullRequestTitle = result.title;
+        var workItemId = pullRequestTitle.match(/(AB#)[0-9]*/g)[0];
+        return workItemId;
+    } catch (err){
+        core.setFailed(err);
+    }
 }
 
-async function updateworkitem(workItemId,env,pullstatus) {
+async function isOpened(env) {
+    let h = new Headers();
+    let auth = 'token ' + env.ghtoken;
+    h.append ('Authorization', auth );
+    try {   
+        const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;    
+        const response= await fetch (requestUrl, {
+            method: 'GET', 
+            headers:h
+            })
+        const result = await response.json();
 
-    try {
-    
-    	  let authHandler = azdev.getPersonalAccessTokenHandler(env.adoToken);
-    	  let connection = new azdev.WebApi(env.orgUrl, authHandler);
-          let client = await connection.getWorkItemTrackingApi();
-          var workitem = await client.getWorkItem(workItemId);
-    	  var currentdescr = String (workitem.fields["System.Description"]);
-          var currentstate = workitem.fields["System.State"];
-    
-          var type = await client.getWorkItemType(env.project,String (workitem.fields["System.WorkItemType"]));
-
-          if (currentstate == env.closedstate)
-          {
-               console.log("WorkItem Cannot be updated");
-               core.setFailed();
-    	  } else {
-               var wstateslength = type.states.length;
-               var i;
-               for (i=wstateslength-1;i>=0;i-- )
-               {
-                   if (currentstate == type.states[i].name)
-                   {
-                       var j = i;
-                       var newstate = type.states[++j].name;             
-                   } 
-                }
-                
-                let workItemSaveResult = null;
-                let mergestatus = [];
-                let newdescription = [];
-                if (pullstatus == "204"){
-			
-                    mergestatus = "Linked Pull Request merge is successful";
-                    newdescription = currentdescr + "<br />" + mergestatus;               
-                    let patchDocument = [
-                        {
-                            op: "add",
-                            path: "/fields/System.State",
-                            value: newstate
-                        },
-                        {
-                            op: "add",
-                            path: "/fields/System.Description",
-                            value: newdescription
-                        }
-                    ];
-
-                    workItemSaveResult = await client.updateWorkItem(
-                           (customHeaders = []),
-                           (document = patchDocument),
-                           (id = workItemId),
-                           (project = env.project),
-                           (validateOnly = false)
-                          );
-                   console.log("Work Item " + workItemId + " state is updated to " + newstate);         
-                   return workItemSaveResult;
-
-                 } else if (pullstatus == "404"){
-
-                    mergestatus = "Pull Request closed without merge";
-                    newdescription = currentdescr + "<br />" + mergestatus;
-
-                    let patchDocument = [
-                        {
-                            op: "add",
-                            path: "/fields/System.State",
-                            value: currentstate
-                        },
-                        {
-                            op: "add",
-                            path: "/fields/System.Description",
-                            value: newdescription
-                        }
-                    ];
-
-                    let workItemSaveResult = null;
-                
-                    workItemSaveResult = await client.updateWorkItem(
-                            (customHeaders = []),
-                            (document = patchDocument),
-                            (id = workItemId),
-                            (project = env.project),
-                            (validateOnly = false)
-                            );
-                    
-                    console.log("Work Item " + workItemId + " state is not updated");        
-                    return workItemSaveResult;
-                    
-                    } else {
-
-                        mergestatus = "Unable to get pull request details";
-                        newdescription = currentdescr + "<br />" + mergestatus;
-
-                        let patchDocument = [
-                            {
-                                op: "add",
-                                path: "/fields/System.State",
-                                value: currentstate
-                            },
-                            {
-                                op: "add",
-                                path: "/fields/System.Description",
-                                value: newdescription
-                            }
-                        ];
-    
-                        let workItemSaveResult = null;
-                    
-                        workItemSaveResult = await client.updateWorkItem(
-                                (customHeaders = []),
-                                (document = patchDocument),
-                                (id = workItemId),
-                                (project = env.project),
-                                (validateOnly = false)
-                                );
-                        console.log(mergestatus);
-                        return workItemSaveResult;
-                    }
-                
-            }
-
-            console.log("Work Item State Updated");
-
+        var pullRequestStatus = result.state;
+        return pullRequestStatus == "open";
     } catch (err){
-        core.setFailed(err.message);
-    }	
+        core.setFailed(err);
+    }
+}
+
+async function isMerged(env) {
+    let h = new Headers();
+    let auth = 'token ' + env.ghtoken;
+    h.append ('Authorization', auth );
+    const newRequestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number+"/merge";    
+    const mergeResponse = await fetch (newRequestUrl, {
+        method: 'GET', 
+        headers:h
+    })
+
+    var pullRequestStatus = mergeResponse.status;
+    if (pullRequestStatus == "204") {
+        return true;
+    }
+
+    return false;
+}
+
+async function updateWorkItem(workItemId, env) {
+    let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(env.adoToken);
+    let connection = new azureDevOpsHandler.WebApi(env.orgUrl, authHandler);
+    let client = await connection.getWorkItemTrackingApi();
+    var workItem = await client.getWorkItem(workItemId);
+    var currentDescription = String (workItem.fields["System.Description"]);
+    var currentState = workItem.fields["System.State"];
+
+    var type = await client.getWorkItemType(env.project,String (workItem.fields["System.WorkItemType"]));
+
+    if (currentState == env.closedstate)
+    {
+        console.log("WorkItem is already closed and cannot be updated anymore.");
+        core.setFailed();
+    } else {        
+        let workItemSaveResult = null;
+        let mergeStatus = [];
+        let newDescription = [];
+
+        if (isMerged(env) == true){
+            mergeStatus = "Linked Pull Request merge is successful";
+            newDescription = currentDescription + "<br />" + mergeStatus;               
+            let patchDocument = [
+                {
+                    op: "add",
+                    path: "/fields/System.State",
+                    value: env.closedstate
+                },
+                {
+                    op: "add",
+                    path: "/fields/System.Description",
+                    value: newDescription
+                }
+            ];
+
+            workItemSaveResult = await client.updateWorkItem(
+                    (customHeaders = []),
+                    (document = patchDocument),
+                    (id = workItemId),
+                    (project = env.project),
+                    (validateOnly = false)
+                    );
+            console.log("Work Item " + workItemId + " state is updated to " + env.closedstate);         
+        } else if (isOpened(env) == true) {
+            mergeStatus = "Linked new Pull Request to Azure Boards";
+            newDescription = currentDescription + "<br />" + mergeStatus;
+            let patchDocument = [
+                {
+                    op: "add",
+                    path: "/fields/System.State",
+                    value: env.prOpenState
+                },
+                {
+                    op: "add",
+                    path: "/fields/System.Description",
+                    value: newDescription
+                }
+            ];
+
+            workItemSaveResult = await client.updateWorkItem(
+                    (customHeaders = []),
+                    (document = patchDocument),
+                    (id = workItemId),
+                    (project = env.project),
+                    (validateOnly = false)
+                    );
+            console.log("Work Item " + workItemId + " state is updated to " + env.prOpenState);     
+        }
+
+        return workItemSaveResult;
+    }
 }
 
 function getValuesFromPayload(payload,env)
@@ -215,7 +171,8 @@ function getValuesFromPayload(payload,env)
             ghrepo: env.gh_repo != undefined ? env.gh_repo :"",
             pull_number: env.pull_number != undefined ? env.pull_number :"",
             closedstate: env.closedstate != undefined ? env.closedstate :"",
-	    ghtoken: env.gh_token != undefined ? env.gh_token :""
+            prOpenState: env.prOpenState != undefined ? env.prOpenState :"",
+	        ghtoken: env.gh_token != undefined ? env.gh_token :""
         }
     }
 
