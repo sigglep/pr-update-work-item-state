@@ -34,7 +34,8 @@ async function getWorkItemIdFromPrTitle(env) {
     let auth = 'token ' + env.ghtoken;
     h.append ('Authorization', auth );
     try {   
-        const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;    
+        const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;
+        console.log("getWorkItemIdFromPrTitle request URL: " + requestUrl);
         const response= await fetch (requestUrl, {
             method: 'GET', 
             headers:h
