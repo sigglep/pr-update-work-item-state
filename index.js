@@ -121,7 +121,7 @@ async function updateWorkItem(workItemId, env) {
     var currentDescription = String (workItem.fields["System.Description"]);
     var currentState = workItem.fields["System.State"];
     var workItemType = workItem.fields["System.WorkItemType"];
-
+    console.log("Work item type: " + workItemType);
     if (workItemType == "Task" || workItemType == "Bug" || workItemType == "Change request") {
 
         if (currentState == env.closedstate)
