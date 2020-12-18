@@ -138,7 +138,7 @@ async function updateWorkItem(workItemId, env) {
             console.log("Work Item " + workItemId + " state is updated to " + env.closedstate);         
         } else {
             try {
-            console.log("PR IS OPENED");
+            console.log("PR IS OPENED: " + env.propenstate);
             mergeStatus = "Linked new Pull Request to Azure Boards";
             newDescription = currentDescription + "<br />" + mergeStatus;
             let patchDocument = [
