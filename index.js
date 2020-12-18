@@ -16,6 +16,7 @@ async function main () {
 
     vm = getValuesFromPayload(github.context.payload,env);
     console.log(vm);
+    console.log("Branch name: " + env.branch_name);
 
     try {
         var workItemId = await getWorkItemIdFromPrTitle(env);
@@ -34,6 +35,31 @@ async function getWorkItemIdFromPrTitle(env) {
     try {   
         const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;
         console.log("getWorkItemIdFromPrTitle request URL: " + requestUrl);
+        const response= await fetch (requestUrl, {
+            method: 'GET', 
+            headers:h
+            })
+        const result = await response.json();
+
+        var pullRequestTitle = result.title;
+        var found = pullRequestTitle.match(/[(0-9)]*/g);
+        console.log("REGEX: " + found);
+        var workItemId = found[3];
+        console.log("WorkItem: " + workItemId);
+        return workItemId;
+    } catch (err){
+        core.setFailed(err);
+    }
+}
+
+async function getWorkItemFromBranchName(env) {
+    let h = new Headers();
+    let auth = 'token ' + env.gh_token;
+    h.append ('Authorization', auth );
+    console.log('Authorization ' + auth);
+    try {   
+        const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;
+        console.log("getWorkItemFromBranchName request URL: " + requestUrl);
         const response= await fetch (requestUrl, {
             method: 'GET', 
             headers:h
@@ -233,6 +259,7 @@ function getValuesFromPayload(payload,env)
             closedstate: env.closedstate != undefined ? env.closedstate :"",
             propenstate: env.propenstate != undefined ? env.propenstate :"",
             inprogressstate: env.inprogressstate != undefined ? env.inprogressstate :"",
+            branch_name: env.branch_name != undefined ? env.branch_name :"",
 	        gh_token: env.gh_token != undefined ? env.gh_token :""
         }
     }
