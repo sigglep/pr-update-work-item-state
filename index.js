@@ -92,14 +92,14 @@ async function isMerged(env) {
 }
 
 async function updateWorkItem(workItemId, env) {
-    let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(env.adoToken);
+    console.log("ADO Token: " + env.ado_token);
+    let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(env.ado_token);
+    console.log("ADO URL: " + "https://dev.azure.com/" + env.ado_organization);
     let connection = new azureDevOpsHandler.WebApi("https://dev.azure.com/" + env.ado_organization, authHandler);
     let client = await connection.getWorkItemTrackingApi();
     var workItem = await client.getWorkItem(workItemId);
     var currentDescription = String (workItem.fields["System.Description"]);
     var currentState = workItem.fields["System.State"];
-
-    var type = await client.getWorkItemType(env.project,String (workItem.fields["System.WorkItemType"]));
 
     if (currentState == env.closedstate)
     {
@@ -172,7 +172,7 @@ function getValuesFromPayload(payload,env)
         env : {
             organization: env.ado_organization != undefined ? env.ado_organization : "",
             orgurl: env.ado_organization != undefined ? "https://dev.azure.com/" + env.ado_organization : "",
-            adoToken: env.ado_token != undefined ? env.ado_token : "",
+            ado_token: env.ado_token != undefined ? env.ado_token : "",
             project: env.ado_project != undefined ? env.ado_project : "",
             ghrepo_owner: env.gh_repo_owner != undefined ? env.gh_repo_owner :"",
             ghrepo: env.gh_repo != undefined ? env.gh_repo :"",
