@@ -31,7 +31,7 @@ function main () {
 
 async function getWorkItemIdFromPrTitle(env) {
     let h = new Headers();
-    let auth = 'token ' + env.ghtoken;
+    let auth = 'token ' + env.gh_token;
     h.append ('Authorization', auth );
     try {   
         const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;
@@ -54,7 +54,7 @@ async function getWorkItemIdFromPrTitle(env) {
 
 async function isOpened(env) {
     let h = new Headers();
-    let auth = 'token ' + env.ghtoken;
+    let auth = 'token ' + env.gh_token;
     h.append ('Authorization', auth );
     try {   
         const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;    
@@ -73,7 +73,7 @@ async function isOpened(env) {
 
 async function isMerged(env) {
     let h = new Headers();
-    let auth = 'token ' + env.ghtoken;
+    let auth = 'token ' + env.gh_token;
     h.append ('Authorization', auth );
     const newRequestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number+"/merge";    
     const mergeResponse = await fetch (newRequestUrl, {
@@ -177,7 +177,7 @@ function getValuesFromPayload(payload,env)
             pull_number: env.pull_number != undefined ? env.pull_number :"",
             closedstate: env.closedstate != undefined ? env.closedstate :"",
             propenstate: env.propenstate != undefined ? env.propenstate :"",
-	        ghtoken: env.gh_token != undefined ? env.gh_token :""
+	        gh_token: env.gh_token != undefined ? env.gh_token :""
         }
     }
 
