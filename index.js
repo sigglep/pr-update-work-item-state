@@ -19,12 +19,25 @@ async function main () {
     console.log("Branch name: " + env.branch_name);
 
     try {
-        var workItemId = await getWorkItemIdFromPrTitle(env);
-        await updateWorkItem(workItemId, env);
+        try{
+            await processPr(env);
+        } catch {
+            await processBranch(env);
+        }
     } catch (err) {
         console.log(err);
         core.setFailed();
     }
+}
+
+async function processPr(env){
+    var workItemId = await getWorkItemIdFromPrTitle(env);
+    await updateWorkItem(workItemId, env);
+}
+
+async function processBranch(env) {
+    var workItemId = await getWorkItemFromBranchName(env);
+    await updateWorkItem(workItemId, env);
 }
 
 async function getWorkItemIdFromPrTitle(env) {
@@ -58,18 +71,10 @@ async function getWorkItemFromBranchName(env) {
     h.append ('Authorization', auth );
     console.log('Authorization ' + auth);
     try {   
-        const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;
-        console.log("getWorkItemFromBranchName request URL: " + requestUrl);
-        const response= await fetch (requestUrl, {
-            method: 'GET', 
-            headers:h
-            })
-        const result = await response.json();
-
-        var pullRequestTitle = result.title;
-        var found = pullRequestTitle.match(/[(0-9)]*/g);
+        var branchName = env.branch_name;
+        var found = branchName.match(/([0-9]+)/g);
         console.log("REGEX: " + found);
-        var workItemId = found[3];
+        var workItemId = found[0];
         console.log("WorkItem: " + workItemId);
         return workItemId;
     } catch (err){
@@ -211,6 +216,35 @@ async function updateWorkItem(workItemId, env) {
         } else if (await isClosed(env) == true) {
             try {
                 console.log("PR IS CLOSED: " + env.inprogressstate);
+                mergeStatus = "Pull request was rejected";
+                newDescription = currentDescription + "<br />" + mergeStatus;
+                let patchDocument = [
+                    {
+                        op: "add",
+                        path: "/fields/System.State",
+                        value: env.inprogressstate
+                    },
+                    {
+                        op: "add",
+                        path: "/fields/System.Description",
+                        value: newDescription
+                    }
+                ];
+    
+                workItemSaveResult = await client.updateWorkItem(
+                        (customHeaders = []),
+                        (document = patchDocument),
+                        (id = workItemId),
+                        (project = env.project),
+                        (validateOnly = false)
+                        );
+                console.log("Work Item " + workItemId + " state is updated to " + env.propenstate);     
+                } catch (err) {
+                    console.log(err);
+                }
+        } else {
+            try {
+                console.log("BRANCH IS OPEN: " + env.inprogressstate);
                 mergeStatus = "Pull request was rejected";
                 newDescription = currentDescription + "<br />" + mergeStatus;
                 let patchDocument = [
