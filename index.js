@@ -15,8 +15,6 @@ async function main () {
     let vm = [];
 
     vm = getValuesFromPayload(github.context.payload,env);
-    console.log(vm);
-    console.log("Branch name: " + env.branch_name);
 
     try {
         var workItemId = await getWorkItemIdFromPrTitleOrBranchName(env);
@@ -31,12 +29,10 @@ async function getWorkItemIdFromPrTitleOrBranchName(env) {
     let h = new Headers();
     let auth = 'token ' + env.gh_token;
     h.append ('Authorization', auth );
-    console.log('Authorization ' + auth);
     try {   
         if(env.pull_number != undefined && env.pull_number != "") {
             console.log("Getting work item ID from PR title");
             const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;
-            console.log("getWorkItemIdFromPrTitle request URL: " + requestUrl);
             const response= await fetch (requestUrl, {
                 method: 'GET', 
                 headers:h
@@ -45,7 +41,6 @@ async function getWorkItemIdFromPrTitleOrBranchName(env) {
 
             var pullRequestTitle = result.title;
             var found = pullRequestTitle.match(/[(0-9)]*/g);
-            console.log("REGEX: " + found);
             var workItemId = found[3];
             console.log("WorkItem: " + workItemId);
             return workItemId;
@@ -53,7 +48,6 @@ async function getWorkItemIdFromPrTitleOrBranchName(env) {
             console.log("Getting work item ID from BRANCH name");
             var branchName = env.branch_name;
             var found = branchName.match(/([0-9]+)/g);
-            console.log("REGEX: " + found);
             var workItemId = found[0];
             console.log("WorkItem: " + workItemId);
             return workItemId;
@@ -76,7 +70,6 @@ async function isOpened(env) {
         const result = await response.json();
 
         var pullRequestStatus = result.state;
-        console.log("Current state: " + pullRequestStatus);
         return pullRequestStatus == "open";
     } catch (err){
         core.setFailed(err);
@@ -121,12 +114,9 @@ async function isClosed(env) {
 }
 
 async function updateWorkItem(workItemId, env) {
-    console.log("ADO Token: " + env.ado_token);
     let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(env.ado_token);
-    console.log("ADO URL: " + "https://dev.azure.com/" + env.ado_organization);
     let connection = new azureDevOpsHandler.WebApi("https://dev.azure.com/" + env.ado_organization, authHandler);
     let client = await connection.getWorkItemTrackingApi();
-    console.log("ADO WorkItemId: " + workItemId);
     var workItem = await client.getWorkItem(workItemId);
     var currentDescription = String (workItem.fields["System.Description"]);
     var currentState = workItem.fields["System.State"];
@@ -219,7 +209,7 @@ async function updateWorkItem(workItemId, env) {
                         (project = env.project),
                         (validateOnly = false)
                         );
-                console.log("Work Item " + workItemId + " state is updated to " + env.propenstate);     
+                console.log("Work Item " + workItemId + " state is updated to " + env.inprogressstate);     
                 } catch (err) {
                     console.log(err);
                 }
@@ -248,7 +238,7 @@ async function updateWorkItem(workItemId, env) {
                         (project = env.project),
                         (validateOnly = false)
                         );
-                console.log("Work Item " + workItemId + " state is updated to " + env.propenstate);     
+                console.log("Work Item " + workItemId + " state is updated to " + env.inprogressstate);     
                 } catch (err) {
                     console.log(err);
                 }
