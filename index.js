@@ -120,131 +120,135 @@ async function updateWorkItem(workItemId, env) {
     var workItem = await client.getWorkItem(workItemId);
     var currentDescription = String (workItem.fields["System.Description"]);
     var currentState = workItem.fields["System.State"];
+    var workItemType = workItem.fields["System.WorkItemType"];
 
-    if (currentState == env.closedstate)
-    {
-        console.log("WorkItem is already closed and cannot be updated anymore.");
-        core.setFailed();
-    } else {        
-        let workItemSaveResult = null;
-        let mergeStatus = [];
-        let newDescription = [];
+    if (workItemType == "Task" || workItemType == "Bug" || workItemType == "Change request") {
 
-        if (await isMerged(env) == true) {
-            console.log("PR IS MERGED");
-            mergeStatus = "Linked Pull Request merge is successful";
-            newDescription = currentDescription + "<br />" + mergeStatus;               
-            let patchDocument = [
-                {
-                    op: "add",
-                    path: "/fields/System.State",
-                    value: env.closedstate
-                },
-                {
-                    op: "add",
-                    path: "/fields/System.Description",
-                    value: newDescription
+        if (currentState == env.closedstate)
+        {
+            console.log("WorkItem is already closed and cannot be updated anymore.");
+            core.setFailed();
+        } else {        
+            let workItemSaveResult = null;
+            let mergeStatus = [];
+            let newDescription = [];
+
+            if (await isMerged(env) == true) {
+                console.log("PR IS MERGED");
+                mergeStatus = "Linked Pull Request merge is successful";
+                newDescription = currentDescription + "<br />" + mergeStatus;               
+                let patchDocument = [
+                    {
+                        op: "add",
+                        path: "/fields/System.State",
+                        value: env.closedstate
+                    },
+                    {
+                        op: "add",
+                        path: "/fields/System.Description",
+                        value: newDescription
+                    }
+                ];
+
+                workItemSaveResult = await client.updateWorkItem(
+                        (customHeaders = []),
+                        (document = patchDocument),
+                        (id = workItemId),
+                        (project = env.project),
+                        (validateOnly = false)
+                        );
+                console.log("Work Item " + workItemId + " state is updated to " + env.closedstate);         
+            } else if (await isOpened(env) == true) {
+                try {
+                console.log("PR IS OPENED: " + env.propenstate);
+                mergeStatus = "Linked new Pull Request to Azure Boards";
+                newDescription = currentDescription + "<br />" + mergeStatus;
+                let patchDocument = [
+                    {
+                        op: "add",
+                        path: "/fields/System.State",
+                        value: env.propenstate
+                    },
+                    {
+                        op: "add",
+                        path: "/fields/System.Description",
+                        value: newDescription
+                    }
+                ];
+
+                workItemSaveResult = await client.updateWorkItem(
+                        (customHeaders = []),
+                        (document = patchDocument),
+                        (id = workItemId),
+                        (project = env.project),
+                        (validateOnly = false)
+                        );
+                console.log("Work Item " + workItemId + " state is updated to " + env.propenstate);     
+                } catch (err) {
+                    console.log(err);
                 }
-            ];
-
-            workItemSaveResult = await client.updateWorkItem(
-                    (customHeaders = []),
-                    (document = patchDocument),
-                    (id = workItemId),
-                    (project = env.project),
-                    (validateOnly = false)
-                    );
-            console.log("Work Item " + workItemId + " state is updated to " + env.closedstate);         
-        } else if (await isOpened(env) == true) {
-            try {
-            console.log("PR IS OPENED: " + env.propenstate);
-            mergeStatus = "Linked new Pull Request to Azure Boards";
-            newDescription = currentDescription + "<br />" + mergeStatus;
-            let patchDocument = [
-                {
-                    op: "add",
-                    path: "/fields/System.State",
-                    value: env.propenstate
-                },
-                {
-                    op: "add",
-                    path: "/fields/System.Description",
-                    value: newDescription
-                }
-            ];
-
-            workItemSaveResult = await client.updateWorkItem(
-                    (customHeaders = []),
-                    (document = patchDocument),
-                    (id = workItemId),
-                    (project = env.project),
-                    (validateOnly = false)
-                    );
-            console.log("Work Item " + workItemId + " state is updated to " + env.propenstate);     
-            } catch (err) {
-                console.log(err);
+            } else if (await isClosed(env) == true) {
+                try {
+                    console.log("PR IS CLOSED: " + env.inprogressstate);
+                    mergeStatus = "Pull request was rejected";
+                    newDescription = currentDescription + "<br />" + mergeStatus;
+                    let patchDocument = [
+                        {
+                            op: "add",
+                            path: "/fields/System.State",
+                            value: env.inprogressstate
+                        },
+                        {
+                            op: "add",
+                            path: "/fields/System.Description",
+                            value: newDescription
+                        }
+                    ];
+        
+                    workItemSaveResult = await client.updateWorkItem(
+                            (customHeaders = []),
+                            (document = patchDocument),
+                            (id = workItemId),
+                            (project = env.project),
+                            (validateOnly = false)
+                            );
+                    console.log("Work Item " + workItemId + " state is updated to " + env.inprogressstate);     
+                    } catch (err) {
+                        console.log(err);
+                    }
+            } else {
+                try {
+                    console.log("BRANCH IS OPEN: " + env.inprogressstate);
+                    mergeStatus = "Pull request was rejected";
+                    newDescription = currentDescription + "<br />" + mergeStatus;
+                    let patchDocument = [
+                        {
+                            op: "add",
+                            path: "/fields/System.State",
+                            value: env.inprogressstate
+                        },
+                        {
+                            op: "add",
+                            path: "/fields/System.Description",
+                            value: newDescription
+                        }
+                    ];
+        
+                    workItemSaveResult = await client.updateWorkItem(
+                            (customHeaders = []),
+                            (document = patchDocument),
+                            (id = workItemId),
+                            (project = env.project),
+                            (validateOnly = false)
+                            );
+                    console.log("Work Item " + workItemId + " state is updated to " + env.inprogressstate);     
+                    } catch (err) {
+                        console.log(err);
+                    }
             }
-        } else if (await isClosed(env) == true) {
-            try {
-                console.log("PR IS CLOSED: " + env.inprogressstate);
-                mergeStatus = "Pull request was rejected";
-                newDescription = currentDescription + "<br />" + mergeStatus;
-                let patchDocument = [
-                    {
-                        op: "add",
-                        path: "/fields/System.State",
-                        value: env.inprogressstate
-                    },
-                    {
-                        op: "add",
-                        path: "/fields/System.Description",
-                        value: newDescription
-                    }
-                ];
-    
-                workItemSaveResult = await client.updateWorkItem(
-                        (customHeaders = []),
-                        (document = patchDocument),
-                        (id = workItemId),
-                        (project = env.project),
-                        (validateOnly = false)
-                        );
-                console.log("Work Item " + workItemId + " state is updated to " + env.inprogressstate);     
-                } catch (err) {
-                    console.log(err);
-                }
-        } else {
-            try {
-                console.log("BRANCH IS OPEN: " + env.inprogressstate);
-                mergeStatus = "Pull request was rejected";
-                newDescription = currentDescription + "<br />" + mergeStatus;
-                let patchDocument = [
-                    {
-                        op: "add",
-                        path: "/fields/System.State",
-                        value: env.inprogressstate
-                    },
-                    {
-                        op: "add",
-                        path: "/fields/System.Description",
-                        value: newDescription
-                    }
-                ];
-    
-                workItemSaveResult = await client.updateWorkItem(
-                        (customHeaders = []),
-                        (document = patchDocument),
-                        (id = workItemId),
-                        (project = env.project),
-                        (validateOnly = false)
-                        );
-                console.log("Work Item " + workItemId + " state is updated to " + env.inprogressstate);     
-                } catch (err) {
-                    console.log(err);
-                }
-        }
 
-        return workItemSaveResult;
+            return workItemSaveResult;
+        }
     }
 }
 
