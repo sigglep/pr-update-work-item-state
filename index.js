@@ -6,7 +6,7 @@ const fetch = require("node-fetch");
 global.Headers = fetch.Headers;
 
 
-await main();
+main();
 async function main () {
   
     const env = process.env
