@@ -128,7 +128,7 @@ async function updateWorkItem(workItemId, env) {
         {
             console.log("WorkItem is already closed and cannot be updated anymore.");
             return;
-        } else if (currentState == env.propenstate) {
+        } else if (currentState == env.propenstate && await isMerged(env) == false) {
             console.log("WorkItem is already in a state of PR open, will not update.");
             return;
         }
