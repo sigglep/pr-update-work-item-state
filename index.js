@@ -21,11 +21,11 @@ async function main () {
         try {
             workItemId = await getWorkItemIdFromPrTitleOrBranchName(env);
             if (workItemId == undefined || workItem == "") {
-                console.log("Work Item ID was not found in PR Title/Branch name, cannot update the work item");
+                console.log("Work Item ID was not found in PR Title/Branch name, cannot update the work item (handled)");
                 return;
             }
         } catch (err) {
-            console.log("Work Item ID was not found in PR Title/Branch name, cannot update the work item");
+            console.log("Work Item ID was not found in PR Title/Branch name, cannot update the work item (not handled)");
             return;
         }
         await updateWorkItem(workItemId, env);
