@@ -127,8 +127,12 @@ async function updateWorkItem(workItemId, env) {
         if (currentState == env.closedstate)
         {
             console.log("WorkItem is already closed and cannot be updated anymore.");
-            core.setFailed();
-        } else {        
+            return;
+        } else if (currentState == env.propenstate) {
+            console.log("WorkItem is already in a state of PR open, will not update.");
+            return;
+        }
+        else {        
             let workItemSaveResult = null;
             let mergeStatus = [];
             let newDescription = [];
