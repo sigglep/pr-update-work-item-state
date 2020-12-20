@@ -20,6 +20,10 @@ async function main () {
         var workItemId = "";
         try {
             workItemId = await getWorkItemIdFromPrTitleOrBranchName(env);
+            if (workItemId == undefined || workItem == "") {
+                console.log("Work Item ID was not found in PR Title/Branch name, cannot update the work item");
+                return;
+            }
         } catch (err) {
             console.log("Work Item ID was not found in PR Title/Branch name, cannot update the work item");
             return;
