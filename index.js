@@ -19,7 +19,7 @@ async function main () {
     try {
         var workItemId = "";
         workItemId = await getWorkItemIdFromPrTitleOrBranchName(env);
-        if (workItemId == undefined || workItem == "") {
+        if (workItemId == undefined || workItemId == "") {
             console.log("Work Item ID was not found in PR Title/Branch name, cannot update the work item (handled)");
             return;
         }
