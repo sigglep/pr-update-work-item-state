@@ -17,17 +17,13 @@ async function main () {
     vm = getValuesFromPayload(github.context.payload,env);
 
     try {
-        var workItemId = "";
-        try {
-            workItemId = await getWorkItemIdFromPrTitleOrBranchName(env);
-            if (workItemId == undefined || workItem == "") {
-                console.log("Work Item ID was not found in PR Title/Branch name, cannot update the work item (handled)");
-                return;
-            }
-        } catch (err) {
-            console.log("Work Item ID was not found in PR Title/Branch name, cannot update the work item (not handled)");
+        var workItemId = "";ś
+        workItemId = await getWorkItemIdFromPrTitleOrBranchName(env);
+        if (workItemId == undefined || workItem == "") {
+            console.log("Work Item ID was not found in PR Title/Branch name, cannot update the work item (handled)");
             return;
         }
+        
         await updateWorkItem(workItemId, env);
     } catch (err) {
         console.log(err);
