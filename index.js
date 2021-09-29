@@ -3,7 +3,7 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.0.9"
+const version = "1.0.10"
 global.Headers = fetch.Headers;
 
 
@@ -61,6 +61,7 @@ async function getWorkItemIdFromPrTitle(env) {
 		console.log("Getting work item ID from PR title");
 		const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;
 		
+		console.log(requestUrl);
 		console.log("Getting response from API");
 		const response = await fetch(requestUrl, {
 			method: 'GET',
