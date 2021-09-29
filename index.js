@@ -3,7 +3,7 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.0.5"
+const version = "1.0.6"
 global.Headers = fetch.Headers;
 
 
@@ -26,7 +26,8 @@ async function main () {
 	else if (env.branch_name.includes("release") ||
 	    env.branch_name.includes("task") ||
 	    env.branch_name.includes("bug") ||
-	    env.branch_name.includes("change-request"))
+	    env.branch_name.includes("change-request") ||
+	    env.branch_name.includes("refs/pull"))
 	{
 	    try {
 		var workItemId = "";
