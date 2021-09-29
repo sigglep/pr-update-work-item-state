@@ -3,7 +3,7 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.0.10"
+const version = "1.0.11"
 global.Headers = fetch.Headers;
 
 
@@ -171,7 +171,7 @@ async function handleMergedPr(workItemId, env) {
 		}
 	];
 	
-	let workItemSaveResult = await client.updateWorkItem(
+	await client.updateWorkItem(
 		(customHeaders = []),
 		(document = patchDocument),
 		(id = workItemId),
@@ -191,7 +191,7 @@ async function handleOpenedPr(workItemId, env) {
 		}
 	];
 	
-	let workItemSaveResult = await client.updateWorkItem(
+	await client.updateWorkItem(
 		(customHeaders = []),
 		(document = patchDocument),
 		(id = workItemId),
@@ -211,7 +211,7 @@ async function handleClosedPr(workItemId, env) {
 		}
 	];
 	
-	let workItemSaveResult = await client.updateWorkItem(
+	await client.updateWorkItem(
 		(customHeaders = []),
 		(document = patchDocument),
 		(id = workItemId),
@@ -231,7 +231,7 @@ async function handleOpenBranch(workItemId, env){
 		}
 	];
 	
-	let workItemSaveResult = await client.updateWorkItem(
+	await client.updateWorkItem(
 		(customHeaders = []),
 		(document = patchDocument),
 		(id = workItemId),
@@ -266,8 +266,6 @@ async function updateWorkItem(workItemId, env) {
 		console.log("BRANCH IS OPEN: " + env.inprogressstate);
 		await handleOpenBranch(env);
 	    }
-
-	    return workItemSaveResult;
 	}
 }
 
