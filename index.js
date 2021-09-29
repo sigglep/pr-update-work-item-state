@@ -3,7 +3,7 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.0.13"
+const version = "1.0.14"
 global.Headers = fetch.Headers;
 
 
@@ -11,68 +11,62 @@ main();
 async function main () {
     console.log("VERSION " + version);
 	
-    const env = process.env
     const context = github.context; 
-    let vm = getValuesFromPayload(github.context.payload,env);
+    let vm = getValuesFromPayload(github.context.payload, process.env);
 	
-	if (env.branch_name.includes("master")){
+	if (process.env.branch_name.includes("master")){
 		console.log("Selected check doesn't work for master branch");
 		return;
 	}
-	else if (env.branch_name.includes("bot")){
+	else if (process.env.branch_name.includes("bot")){
 		console.log("Checks are not being done for bot branches");
 		return;
 	}
-	else if (env.branch_name.includes("release") ||
-	    env.branch_name.includes("task") ||
-	    env.branch_name.includes("bug") ||
-	    env.branch_name.includes("change-request") ||
-	    env.branch_name.includes("refs/pull"))
+	else if (process.env.branch_name.includes("release") ||
+	    process.env.branch_name.includes("task") ||
+	    process.env.branch_name.includes("bug") ||
+	    process.env.branch_name.includes("change-request") ||
+	    process.env.branch_name.includes("refs/pull"))
 	{
 	    try {
 		var workItemId = "";
-		workItemId = await getWorkItemIdFromPrTitleOrBranchName(env);
-		await updateWorkItem(workItemId, env);
+		workItemId = await getWorkItemIdFromPrTitleOrBranchName();
+		await updateWorkItem(workItemId);
 	    } catch (err) {
 		core.setFailed(err.toString());
 	    }
 	}
 	else {
-		core.setFailed("Wrong branch name detected (" + env.branch_name + "), please rename the branch to contain work item ID");
+		core.setFailed("Wrong branch name detected (" + process.env.branch_name + "), please rename the branch to contain work item ID");
 	}
 }
 
 function getRequestHeaders(){
 	let h = new Headers();
-	let auth = 'token ' + env.gh_token;
+	let auth = 'token ' + process.env.gh_token;
 	h.append('Authorization', auth);
 	return h;
 }
 
-async function getAzureDevOpsClient(env){
-	let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(env.ado_token);
-	let connection = new azureDevOpsHandler.WebApi("https://dev.azure.com/" + env.ado_organization, authHandler);
+async function getAzureDevOpsClient(){
+	let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(process.env.ado_token);
+	let connection = new azureDevOpsHandler.WebApi("https://dev.azure.com/" + process.env.ado_organization, authHandler);
 	let client = await connection.getWorkItemTrackingApi();
 	return client;
 }
 
-async function getWorkItemIdFromPrTitle(env) {
+async function getWorkItemIdFromPrTitle() {
 	try {
 		console.log("Getting work item ID from PR title");
-		const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;
+		const requestUrl = "https://api.github.com/repos/"+process.env.ghrepo_owner+"/"+process.env.ghrepo+"/pulls/"+process.env.pull_number;
 		
-		console.log(requestUrl);
-		console.log("Getting response from API");
 		const response = await fetch(requestUrl, {
 			method: 'GET',
 			headers: getRequestHeaders()
 		});
-		console.log("Getting JSON response");
 		const result = await response.json();
-		console.log(result);
 		
 		var pullRequestTitle = result.title;
-		console.log("PR title: " + pullRequestTitle);
 		
 		try {
 			var foundMatches = pullRequestTitle.match(/[(0-9)]*/g);
@@ -87,8 +81,8 @@ async function getWorkItemIdFromPrTitle(env) {
 	}
 }
 
-function getWorkItemIdFromBranchName(env) {
-	var branchName = env.branch_name;
+function getWorkItemIdFromBranchName() {
+	var branchName = process.env.branch_name;
 	try {
 		var foundMatches = branchName.match(/([0-9]+)/g);
 		var workItemId = foundMatches[0];
@@ -99,8 +93,8 @@ function getWorkItemIdFromBranchName(env) {
 	}
 }
 
-async function getWorkItemIdFromPrTitleOrBranchName(env) {
-	if(env.pull_number != undefined && env.pull_number != "") {
+async function getWorkItemIdFromPrTitleOrBranchName() {
+	if(process.env.pull_number != undefined && process.env.pull_number != "") {
 	    console.log("Getting work item ID from PR title");
 	    return await getWorkItemIdFromPrTitle(env);
 	} else {
@@ -109,9 +103,9 @@ async function getWorkItemIdFromPrTitleOrBranchName(env) {
 	}
 }
 
-async function isOpened(env) {
+async function isOpened() {
     try {   
-        const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;    
+        const requestUrl = "https://api.github.com/repos/"+process.env.ghrepo_owner+"/"+process.env.ghrepo+"/pulls/"+process.env.pull_number;    
         const response = await fetch (requestUrl, {
             method: 'GET', 
             headers: getRequestHeaders()
@@ -125,9 +119,9 @@ async function isOpened(env) {
     }
 }
 
-async function isMerged(env) {
+async function isMerged() {
 	try {
-		const newRequestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number+"/merge";    
+		const newRequestUrl = "https://api.github.com/repos/"+process.env.ghrepo_owner+"/"+process.env.ghrepo+"/pulls/"+process.env.pull_number+"/merge";    
 		const mergeResponse = await fetch (newRequestUrl, {
 			method: 'GET', 
 			headers: getRequestHeaders()
@@ -144,9 +138,9 @@ async function isMerged(env) {
 	}
 }
 
-async function isClosed(env) {
+async function isClosed() {
     try {   
-        const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;    
+        const requestUrl = "https://api.github.com/repos/"+process.env.ghrepo_owner+"/"+process.env.ghrepo+"/pulls/"+process.env.pull_number;    
         const response= await fetch (requestUrl, {
             method: 'GET', 
             headers: getRequestHeaders()
@@ -160,14 +154,14 @@ async function isClosed(env) {
     }
 }
 
-async function handleMergedPr(workItemId, env) {
-	let client = getAzureDevOpsClient(env);
+async function handleMergedPr(workItemId) {
+	let client = getAzureDevOpsClient();
 	
 	let patchDocument = [
 		{
 			op: "add",
 			path: "/fields/System.State",
-			value: env.closedstate
+			value: process.env.closedstate
 		}
 	];
 	
@@ -175,19 +169,19 @@ async function handleMergedPr(workItemId, env) {
 		(customHeaders = []),
 		(document = patchDocument),
 		(id = workItemId),
-		(project = env.project),
+		(project = process.env.project),
 		(validateOnly = false)
 		);
 }
 
-async function handleOpenedPr(workItemId, env) {
-	let client = getAzureDevOpsClient(env);
+async function handleOpenedPr(workItemId) {
+	let client = getAzureDevOpsClient();
 	
 	let patchDocument = [
 		{
 			op: "add",
 			path: "/fields/System.State",
-			value: env.propenstate
+			value: process.env.propenstate
 		}
 	];
 	
@@ -195,19 +189,19 @@ async function handleOpenedPr(workItemId, env) {
 		(customHeaders = []),
 		(document = patchDocument),
 		(id = workItemId),
-		(project = env.project),
+		(project = process.env.project),
 		(validateOnly = false)
 		);
 }
 
-async function handleClosedPr(workItemId, env) {
-	let client = getAzureDevOpsClient(env);
+async function handleClosedPr(workItemId) {
+	let client = getAzureDevOpsClient();
 	
 	let patchDocument = [
 		{
 			op: "add",
 			path: "/fields/System.State",
-			value: env.inprogressstate
+			value: process.env.inprogressstate
 		}
 	];
 	
@@ -215,19 +209,19 @@ async function handleClosedPr(workItemId, env) {
 		(customHeaders = []),
 		(document = patchDocument),
 		(id = workItemId),
-		(project = env.project),
+		(project = process.env.project),
 		(validateOnly = false)
 		);	
 }
 
-async function handleOpenBranch(workItemId, env){
-	let client = getAzureDevOpsClient(env);
+async function handleOpenBranch(workItemId){
+	let client = getAzureDevOpsClient();
 	
 	let patchDocument = [
 		{
 			op: "add",
 			path: "/fields/System.State",
-			value: env.inprogressstate
+			value: process.env.inprogressstate
 		}
 	];
 	
@@ -235,58 +229,58 @@ async function handleOpenBranch(workItemId, env){
 		(customHeaders = []),
 		(document = patchDocument),
 		(id = workItemId),
-		(project = env.project),
+		(project = process.env.project),
 		(validateOnly = false)
 		);	
 }
 
-async function updateWorkItem(workItemId, env) {
-	let client = await getAzureDevOpsClient(env);
+async function updateWorkItem(workItemId) {
+	let client = await getAzureDevOpsClient();
 	var workItem = await client.getWorkItem(workItemId);
 	
-	if (workItem.fields["System.State"] == env.closedstate)
+	if (workItem.fields["System.State"] == process.env.closedstate)
 	{
 	    console.log("WorkItem is already closed and cannot be updated anymore.");
 	    return;
-	} else if (workItem.fields["System.State"] == env.propenstate && await isMerged(env) == false) {
+	} else if (workItem.fields["System.State"] == process.env.propenstate && await isMerged() == false) {
 	    console.log("WorkItem is already in a state of PR open, will not update.");
 	    return;
 	}
 	else {        
-	    if (await isMerged(env) == true) {
+	    if (await isMerged() == true) {
 		console.log("PR IS MERGED");
-		await handleMergedPr(workItemId, env);  
-	    } else if (await isOpened(env) == true) {
-		console.log("PR IS OPENED: " + env.propenstate);
-		await handleOpenedPr(workItemId, env);
-	    } else if (await isClosed(env) == true) {
-		console.log("PR IS CLOSED: " + env.inprogressstate);
-		await handleClosedPr(workItemId, env)
+		await handleMergedPr(workItemId);  
+	    } else if (await isOpened() == true) {
+		console.log("PR IS OPENED: " + process.env.propenstate);
+		await handleOpenedPr(workItemId);
+	    } else if (await isClosed() == true) {
+		console.log("PR IS CLOSED: " + process.env.inprogressstate);
+		await handleClosedPr(workItemId)
 	    } else {
-		console.log("BRANCH IS OPEN: " + env.inprogressstate);
-		await handleOpenBranch(workItemId, env);
+		console.log("BRANCH IS OPEN: " + process.env.inprogressstate);
+		await handleOpenBranch(workItemId);
 	    }
 	}
 }
 
-function getValuesFromPayload(payload,env)
+function getValuesFromPayload(payload)
 {
    var vm = {
         action: payload.action != undefined ? payload.action : "",
 
-        env : {
-            organization: env.ado_organization != undefined ? env.ado_organization : "",
-            orgurl: env.ado_organization != undefined ? "https://dev.azure.com/" + env.ado_organization : "",
-            ado_token: env.ado_token != undefined ? env.ado_token : "",
-            project: env.ado_project != undefined ? env.ado_project : "",
-            ghrepo_owner: env.gh_repo_owner != undefined ? env.gh_repo_owner :"",
-            ghrepo: env.gh_repo != undefined ? env.gh_repo :"",
-            pull_number: env.pull_number != undefined ? env.pull_number :"",
-            closedstate: env.closedstate != undefined ? env.closedstate :"",
-            propenstate: env.propenstate != undefined ? env.propenstate :"",
-            inprogressstate: env.inprogressstate != undefined ? env.inprogressstate :"",
-            branch_name: env.branch_name != undefined ? env.branch_name :"",
-	        gh_token: env.gh_token != undefined ? env.gh_token :""
+        process.env : {
+            organization: process.env.ado_organization != undefined ? process.env.ado_organization : "",
+            orgurl: process.env.ado_organization != undefined ? "https://dev.azure.com/" + process.env.ado_organization : "",
+            ado_token: process.env.ado_token != undefined ? process.env.ado_token : "",
+            project: process.env.ado_project != undefined ? process.env.ado_project : "",
+            ghrepo_owner: process.env.gh_repo_owner != undefined ? process.env.gh_repo_owner :"",
+            ghrepo: process.env.gh_repo != undefined ? process.env.gh_repo :"",
+            pull_number: process.env.pull_number != undefined ? process.env.pull_number :"",
+            closedstate: process.env.closedstate != undefined ? process.env.closedstate :"",
+            propenstate: process.env.propenstate != undefined ? process.env.propenstate :"",
+            inprogressstate: process.env.inprogressstate != undefined ? process.env.inprogressstate :"",
+            branch_name: process.env.branch_name != undefined ? process.env.branch_name :"",
+	        gh_token: process.env.gh_token != undefined ? process.env.gh_token :""
         }
     }
 
