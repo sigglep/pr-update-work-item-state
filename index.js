@@ -3,7 +3,7 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.0"
+const version = "1.0.1"
 global.Headers = fetch.Headers;
 
 
@@ -13,24 +13,28 @@ async function main () {
 	
     const env = process.env
     const context = github.context; 
-
-    let vm = [];
-
-    vm = getValuesFromPayload(github.context.payload,env);
-
-    try {
-        var workItemId = "";
-        workItemId = await getWorkItemIdFromPrTitleOrBranchName(env);
-        if (workItemId == undefined || workItemId == "") {
-            console.log("Work Item ID was not found in PR Title/Branch name, cannot update the work item (handled)");
-            return;
-        }
-        
-        await updateWorkItem(workItemId, env);
-    } catch (err) {
-        console.log(err);
-        core.setFailed();
-    }
+    let vm = getValuesFromPayload(github.context.payload,env);
+	
+	if (env.branch_name.includes("master")){
+		console.log("Selected check doesn't work for master branch");
+		return;
+	}
+	else if (env.branch_name.includes("release") ||
+	    env.branch_name.includes("task") ||
+	    env.branch_name.includes("bug") ||
+	    env.branch_name.includes("change-request"))
+	{
+	    try {
+		var workItemId = "";
+		workItemId = await getWorkItemIdFromPrTitleOrBranchName(env);
+		await updateWorkItem(workItemId, env);
+	    } catch (err) {
+		core.setFailed(err);
+	    }
+	}
+	else {
+		core.setFailed("Wrong branch name detected, please rename the branch to contain work item ID");
+	}
 }
 
 async function getWorkItemIdFromPrTitle(env) {
