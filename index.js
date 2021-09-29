@@ -3,7 +3,7 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.0.17"
+const version = "1.0.18"
 global.Headers = fetch.Headers;
 
 
@@ -32,6 +32,7 @@ async function main () {
 		var workItemId = "";
 		workItemId = await getWorkItemIdFromPrTitleOrBranchName();
 		await updateWorkItem(workItemId);
+		console.log("Work item " + workItemId + " was updated successfully");
 	    } catch (err) {
 		core.setFailed(err.toString());
 	    }
@@ -46,13 +47,6 @@ function getRequestHeaders(){
 	let auth = 'token ' + process.env.gh_token;
 	h.append('Authorization', auth);
 	return h;
-}
-
-async function getAzureDevOpsClient(){
-	let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(process.env.ado_token);
-	let connection = new azureDevOpsHandler.WebApi("https://dev.azure.com/" + process.env.ado_organization, authHandler);
-	let client = await connection.getWorkItemTrackingApi();
-	return client;
 }
 
 async function getWorkItemIdFromPrTitle() {
@@ -155,7 +149,9 @@ async function isClosed() {
 }
 
 async function handleMergedPr(workItemId) {
-	var client = getAzureDevOpsClient();
+	let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(process.env.ado_token);
+	let connection = new azureDevOpsHandler.WebApi("https://dev.azure.com/" + process.env.ado_organization, authHandler);
+	let client = await connection.getWorkItemTrackingApi();
 	
 	let patchDocument = [
 		{
@@ -175,7 +171,9 @@ async function handleMergedPr(workItemId) {
 }
 
 async function handleOpenedPr(workItemId) {
-	var client = getAzureDevOpsClient();
+	let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(process.env.ado_token);
+	let connection = new azureDevOpsHandler.WebApi("https://dev.azure.com/" + process.env.ado_organization, authHandler);
+	let client = await connection.getWorkItemTrackingApi();
 	
 	let patchDocument = [
 		{
@@ -195,7 +193,9 @@ async function handleOpenedPr(workItemId) {
 }
 
 async function handleClosedPr(workItemId) {
-	var client = getAzureDevOpsClient();
+	let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(process.env.ado_token);
+	let connection = new azureDevOpsHandler.WebApi("https://dev.azure.com/" + process.env.ado_organization, authHandler);
+	let client = await connection.getWorkItemTrackingApi();
 	
 	let patchDocument = [
 		{
@@ -237,7 +237,9 @@ async function handleOpenBranch(workItemId){
 }
 
 async function updateWorkItem(workItemId) {
-	let client = await getAzureDevOpsClient();
+	let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(process.env.ado_token);
+	let connection = new azureDevOpsHandler.WebApi("https://dev.azure.com/" + process.env.ado_organization, authHandler);
+	let client = await connection.getWorkItemTrackingApi();
 	var workItem = await client.getWorkItem(workItemId);
 	
 	if (workItem.fields["System.State"] == process.env.closedstate)
