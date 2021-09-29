@@ -215,7 +215,9 @@ async function handleClosedPr(workItemId) {
 }
 
 async function handleOpenBranch(workItemId){
-	var client = getAzureDevOpsClient();
+	let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(process.env.ado_token);
+	let connection = new azureDevOpsHandler.WebApi("https://dev.azure.com/" + process.env.ado_organization, authHandler);
+	let client = await connection.getWorkItemTrackingApi();
 	
 	let patchDocument = [
 		{
