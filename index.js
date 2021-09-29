@@ -3,7 +3,7 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.0.2"
+const version = "1.0.3"
 global.Headers = fetch.Headers;
 
 
@@ -41,18 +41,28 @@ async function main () {
 	}
 }
 
-async function getWorkItemIdFromPrTitle(env) {
+function getRequestHeaders(){
 	let h = new Headers();
 	let auth = 'token ' + env.gh_token;
 	h.append('Authorization', auth);
-	
+	return h;
+}
+
+async function getAzureDevOpsClient(env){
+	let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(env.ado_token);
+	let connection = new azureDevOpsHandler.WebApi("https://dev.azure.com/" + env.ado_organization, authHandler);
+	let client = await connection.getWorkItemTrackingApi();
+	return client;
+}
+
+async function getWorkItemIdFromPrTitle(env) {
 	try {
 		console.log("Getting work item iD from PR title");
 		const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;
 		
 		const response = await fetch(requestUrl, {
 			method: 'GET',
-			headers: h
+			headers: getRequestHeaders()
 		});
 		const result = await response.json();
 		
@@ -70,7 +80,7 @@ async function getWorkItemIdFromPrTitle(env) {
 	}
 }
 
-async function getWorkItemIdFromBranchName(env) {
+function getWorkItemIdFromBranchName(env) {
 	var branchName = env.branch_name;
 	try {
 		var foundMatches = branchName.match(/([0-9]+)/g);
@@ -83,31 +93,21 @@ async function getWorkItemIdFromBranchName(env) {
 }
 
 async function getWorkItemIdFromPrTitleOrBranchName(env) {
-    let h = new Headers();
-    let auth = 'token ' + env.gh_token;
-    h.append ('Authorization', auth );
-    try {   
-        if(env.pull_number != undefined && env.pull_number != "") {
-            console.log("Getting work item ID from PR title");
-            return await getWorkItemIdFromPrTitle(env);
-        } else {
-            console.log("Getting work item ID from BRANCH name");
-            return await getWorkItemIdFromBranchName(env);
-        }
-    } catch (err){
-        core.setFailed(err);
-    }
+	if(env.pull_number != undefined && env.pull_number != "") {
+	    console.log("Getting work item ID from PR title");
+	    return await getWorkItemIdFromPrTitle(env);
+	} else {
+	    console.log("Getting work item ID from BRANCH name");
+	    return getWorkItemIdFromBranchName(env);
+	}
 }
 
 async function isOpened(env) {
-    let h = new Headers();
-    let auth = 'token ' + env.gh_token;
-    h.append ('Authorization', auth );
     try {   
         const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;    
-        const response= await fetch (requestUrl, {
+        const response = await fetch (requestUrl, {
             method: 'GET', 
-            headers:h
+            headers: getRequestHeaders()
             })
         const result = await response.json();
 
@@ -119,32 +119,30 @@ async function isOpened(env) {
 }
 
 async function isMerged(env) {
-    let h = new Headers();
-    let auth = 'token ' + env.gh_token;
-    h.append ('Authorization', auth );
-    const newRequestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number+"/merge";    
-    const mergeResponse = await fetch (newRequestUrl, {
-        method: 'GET', 
-        headers:h
-    })
+	try {
+		const newRequestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number+"/merge";    
+		const mergeResponse = await fetch (newRequestUrl, {
+			method: 'GET', 
+			headers: getRequestHeaders()
+		})
 
-    var pullRequestStatus = mergeResponse.status;
-    if (pullRequestStatus == "204") {
-        return true;
-    }
+		var pullRequestStatus = mergeResponse.status;
+		if (pullRequestStatus == "204") {
+			return true;
+		}
 
-    return false;
+		return false;
+	} catch (err) {
+		core.setFailed(err);
+	}
 }
 
 async function isClosed(env) {
-    let h = new Headers();
-    let auth = 'token ' + env.gh_token;
-    h.append ('Authorization', auth );
     try {   
         const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;    
         const response= await fetch (requestUrl, {
             method: 'GET', 
-            headers:h
+            headers: getRequestHeaders()
             })
         const result = await response.json();
 
@@ -155,147 +153,115 @@ async function isClosed(env) {
     }
 }
 
+async function handleMergedPr(workItemId, env) {
+	let client = getAzureDevOpsClient(env);
+	
+	let patchDocument = [
+		{
+			op: "add",
+			path: "/fields/System.State",
+			value: env.closedstate
+		}
+	];
+	
+	let workItemSaveResult = await client.updateWorkItem(
+		(customHeaders = []),
+		(document = patchDocument),
+		(id = workItemId),
+		(project = env.project),
+		(validateOnly = false)
+		);
+}
+
+async function handleOpenedPr(workItemId, env) {
+	let client = getAzureDevOpsClient(env);
+	
+	let patchDocument = [
+		{
+			op: "add",
+			path: "/fields/System.State",
+			value: env.propenstate
+		}
+	];
+	
+	let workItemSaveResult = await client.updateWorkItem(
+		(customHeaders = []),
+		(document = patchDocument),
+		(id = workItemId),
+		(project = env.project),
+		(validateOnly = false)
+		);
+}
+
+async function handleClosedPr(workItemId, env) {
+	let client = getAzureDevOpsClient(env);
+	
+	let patchDocument = [
+		{
+			op: "add",
+			path: "/fields/System.State",
+			value: env.inprogressstate
+		}
+	];
+	
+	let workItemSaveResult = await client.updateWorkItem(
+		(customHeaders = []),
+		(document = patchDocument),
+		(id = workItemId),
+		(project = env.project),
+		(validateOnly = false)
+		);	
+}
+
+async function handleOpenBranch(workItemId, env){
+	let client = getAzureDevOpsClient(env);
+	
+	let patchDocument = [
+		{
+			op: "add",
+			path: "/fields/System.State",
+			value: env.inprogressstate
+		}
+	];
+	
+	let workItemSaveResult = await client.updateWorkItem(
+		(customHeaders = []),
+		(document = patchDocument),
+		(id = workItemId),
+		(project = env.project),
+		(validateOnly = false)
+		);	
+}
+
 async function updateWorkItem(workItemId, env) {
-    let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(env.ado_token);
-    let connection = new azureDevOpsHandler.WebApi("https://dev.azure.com/" + env.ado_organization, authHandler);
-    let client = await connection.getWorkItemTrackingApi();
-    var workItem = await client.getWorkItem(workItemId);
-    var currentDescription = String (workItem.fields["System.Description"]);
-    var currentState = workItem.fields["System.State"];
-    var workItemType = workItem.fields["System.WorkItemType"];
-    console.log("Work item type: " + workItemType);
-    if (workItemType == "Task" || workItemType == "Bug" || workItemType == "Change request") {
+	let client = await getAzureDevOpsClient(env);
+	var workItem = await client.getWorkItem(workItemId);
+	
+	if (workItem.fields["System.State"] == env.closedstate)
+	{
+	    console.log("WorkItem is already closed and cannot be updated anymore.");
+	    return;
+	} else if (workItem.fields["System.State"] == env.propenstate && await isMerged(env) == false) {
+	    console.log("WorkItem is already in a state of PR open, will not update.");
+	    return;
+	}
+	else {        
+	    if (await isMerged(env) == true) {
+		console.log("PR IS MERGED");
+		await handleMergedPr(workItemId, env);  
+	    } else if (await isOpened(env) == true) {
+		console.log("PR IS OPENED: " + env.propenstate);
+		await handleOpenedPr(workItemId, env);
+	    } else if (await isClosed(env) == true) {
+		console.log("PR IS CLOSED: " + env.inprogressstate);
+		await handleClosedPr(env)
+	    } else {
+		console.log("BRANCH IS OPEN: " + env.inprogressstate);
+		await handleOpenBranch(env);
+	    }
 
-        if (currentState == env.closedstate)
-        {
-            console.log("WorkItem is already closed and cannot be updated anymore.");
-            return;
-        } else if (currentState == env.propenstate && await isMerged(env) == false) {
-            console.log("WorkItem is already in a state of PR open, will not update.");
-            return;
-        }
-        else {        
-            let workItemSaveResult = null;
-            let mergeStatus = [];
-            let newDescription = [];
-
-            if (await isMerged(env) == true) {
-                console.log("PR IS MERGED");
-                mergeStatus = "Linked Pull Request merge is successful";
-                newDescription = currentDescription + "<br />" + mergeStatus;               
-                let patchDocument = [
-                    {
-                        op: "add",
-                        path: "/fields/System.State",
-                        value: env.closedstate
-                    },
-                    {
-                        op: "add",
-                        path: "/fields/System.Description",
-                        value: newDescription
-                    }
-                ];
-
-                workItemSaveResult = await client.updateWorkItem(
-                        (customHeaders = []),
-                        (document = patchDocument),
-                        (id = workItemId),
-                        (project = env.project),
-                        (validateOnly = false)
-                        );
-                console.log("Work Item " + workItemId + " state is updated to " + env.closedstate);         
-            } else if (await isOpened(env) == true) {
-                try {
-                console.log("PR IS OPENED: " + env.propenstate);
-                mergeStatus = "Linked new Pull Request to Azure Boards";
-                newDescription = currentDescription + "<br />" + mergeStatus;
-                let patchDocument = [
-                    {
-                        op: "add",
-                        path: "/fields/System.State",
-                        value: env.propenstate
-                    },
-                    {
-                        op: "add",
-                        path: "/fields/System.Description",
-                        value: newDescription
-                    }
-                ];
-
-                workItemSaveResult = await client.updateWorkItem(
-                        (customHeaders = []),
-                        (document = patchDocument),
-                        (id = workItemId),
-                        (project = env.project),
-                        (validateOnly = false)
-                        );
-                console.log("Work Item " + workItemId + " state is updated to " + env.propenstate);     
-                } catch (err) {
-                    console.log(err);
-                }
-            } else if (await isClosed(env) == true) {
-                try {
-                    console.log("PR IS CLOSED: " + env.inprogressstate);
-                    mergeStatus = "Pull request was rejected";
-                    newDescription = currentDescription + "<br />" + mergeStatus;
-                    let patchDocument = [
-                        {
-                            op: "add",
-                            path: "/fields/System.State",
-                            value: env.inprogressstate
-                        },
-                        {
-                            op: "add",
-                            path: "/fields/System.Description",
-                            value: newDescription
-                        }
-                    ];
-        
-                    workItemSaveResult = await client.updateWorkItem(
-                            (customHeaders = []),
-                            (document = patchDocument),
-                            (id = workItemId),
-                            (project = env.project),
-                            (validateOnly = false)
-                            );
-                    console.log("Work Item " + workItemId + " state is updated to " + env.inprogressstate);     
-                    } catch (err) {
-                        console.log(err);
-                    }
-            } else {
-                try {
-                    console.log("BRANCH IS OPEN: " + env.inprogressstate);
-                    mergeStatus = "Pull request was rejected";
-                    newDescription = currentDescription + "<br />" + mergeStatus;
-                    let patchDocument = [
-                        {
-                            op: "add",
-                            path: "/fields/System.State",
-                            value: env.inprogressstate
-                        },
-                        {
-                            op: "add",
-                            path: "/fields/System.Description",
-                            value: newDescription
-                        }
-                    ];
-        
-                    workItemSaveResult = await client.updateWorkItem(
-                            (customHeaders = []),
-                            (document = patchDocument),
-                            (id = workItemId),
-                            (project = env.project),
-                            (validateOnly = false)
-                            );
-                    console.log("Work Item " + workItemId + " state is updated to " + env.inprogressstate);     
-                    } catch (err) {
-                        console.log(err);
-                    }
-            }
-
-            return workItemSaveResult;
-        }
-    }
+	    return workItemSaveResult;
+	}
 }
 
 function getValuesFromPayload(payload,env)
