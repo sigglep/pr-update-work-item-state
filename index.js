@@ -3,7 +3,7 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.0.11"
+const version = "1.0.12"
 global.Headers = fetch.Headers;
 
 
@@ -34,7 +34,7 @@ async function main () {
 		workItemId = await getWorkItemIdFromPrTitleOrBranchName(env);
 		await updateWorkItem(workItemId, env);
 	    } catch (err) {
-		core.setFailed(err);
+		core.setFailed(err.toString());
 	    }
 	}
 	else {
@@ -83,7 +83,7 @@ async function getWorkItemIdFromPrTitle(env) {
 			core.setFailed("Wrong PR name detected");
 		}
 	} catch (err) {
-		core.setFailed(err);
+		core.setFailed(err.toString());
 	}
 }
 
@@ -121,7 +121,7 @@ async function isOpened(env) {
         var pullRequestStatus = result.state;
         return pullRequestStatus == "open";
     } catch (err){
-        core.setFailed(err);
+        core.setFailed(err.toString());
     }
 }
 
@@ -140,7 +140,7 @@ async function isMerged(env) {
 
 		return false;
 	} catch (err) {
-		core.setFailed(err);
+		core.setFailed(err.toString());
 	}
 }
 
@@ -156,7 +156,7 @@ async function isClosed(env) {
         var pullRequestStatus = result.state;
         return pullRequestStatus == "closed";
     } catch (err){
-        core.setFailed(err);
+        core.setFailed(err.toString());
     }
 }
 
