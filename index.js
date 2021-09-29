@@ -3,7 +3,7 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.0.12"
+const version = "1.0.13"
 global.Headers = fetch.Headers;
 
 
@@ -261,10 +261,10 @@ async function updateWorkItem(workItemId, env) {
 		await handleOpenedPr(workItemId, env);
 	    } else if (await isClosed(env) == true) {
 		console.log("PR IS CLOSED: " + env.inprogressstate);
-		await handleClosedPr(env)
+		await handleClosedPr(workItemId, env)
 	    } else {
 		console.log("BRANCH IS OPEN: " + env.inprogressstate);
-		await handleOpenBranch(env);
+		await handleOpenBranch(workItemId, env);
 	    }
 	}
 }
