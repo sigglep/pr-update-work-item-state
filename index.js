@@ -35,7 +35,7 @@ async function main () {
 
 async function getWorkItemIdFromPrTitle(env) {
 	let h = new Headers();
-	let auth = 'token ' = env.gh_token;
+	let auth = 'token ' + env.gh_token;
 	h.append('Authorization', auth);
 	
 	try {
