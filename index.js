@@ -12,7 +12,7 @@ async function main () {
     console.log("VERSION " + version);
 	
     const context = github.context; 
-    let vm = getValuesFromPayload(github.context.payload, process.env);
+    let vm = getValuesFromPayload(github.context.payload);
 	
 	if (process.env.branch_name.includes("master")){
 		console.log("Selected check doesn't work for master branch");
@@ -268,7 +268,7 @@ function getValuesFromPayload(payload)
    var vm = {
         action: payload.action != undefined ? payload.action : "",
 
-        process.env : {
+        env : {
             organization: process.env.ado_organization != undefined ? process.env.ado_organization : "",
             orgurl: process.env.ado_organization != undefined ? "https://dev.azure.com/" + process.env.ado_organization : "",
             ado_token: process.env.ado_token != undefined ? process.env.ado_token : "",
