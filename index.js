@@ -3,7 +3,7 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.0.3"
+const version = "1.0.4"
 global.Headers = fetch.Headers;
 
 
@@ -37,6 +37,7 @@ async function main () {
 	    }
 	}
 	else {
+		throw new Error("Wrong branch name detected, please rename the branch to contain work item ID");
 		core.setFailed("Wrong branch name detected, please rename the branch to contain work item ID");
 	}
 }
