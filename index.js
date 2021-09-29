@@ -155,7 +155,7 @@ async function isClosed() {
 }
 
 async function handleMergedPr(workItemId) {
-	let client = getAzureDevOpsClient();
+	var client = getAzureDevOpsClient();
 	
 	let patchDocument = [
 		{
@@ -175,7 +175,7 @@ async function handleMergedPr(workItemId) {
 }
 
 async function handleOpenedPr(workItemId) {
-	let client = getAzureDevOpsClient();
+	var client = getAzureDevOpsClient();
 	
 	let patchDocument = [
 		{
@@ -195,7 +195,7 @@ async function handleOpenedPr(workItemId) {
 }
 
 async function handleClosedPr(workItemId) {
-	let client = getAzureDevOpsClient();
+	var client = getAzureDevOpsClient();
 	
 	let patchDocument = [
 		{
@@ -215,7 +215,7 @@ async function handleClosedPr(workItemId) {
 }
 
 async function handleOpenBranch(workItemId){
-	let client = getAzureDevOpsClient();
+	var client = getAzureDevOpsClient();
 	
 	let patchDocument = [
 		{
