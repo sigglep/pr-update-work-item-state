@@ -3,7 +3,7 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.0.14"
+const version = "1.0.16"
 global.Headers = fetch.Headers;
 
 
@@ -96,10 +96,10 @@ function getWorkItemIdFromBranchName() {
 async function getWorkItemIdFromPrTitleOrBranchName() {
 	if(process.env.pull_number != undefined && process.env.pull_number != "") {
 	    console.log("Getting work item ID from PR title");
-	    return await getWorkItemIdFromPrTitle(env);
+	    return await getWorkItemIdFromPrTitle();
 	} else {
 	    console.log("Getting work item ID from BRANCH name");
-	    return getWorkItemIdFromBranchName(env);
+	    return getWorkItemIdFromBranchName();
 	}
 }
 
