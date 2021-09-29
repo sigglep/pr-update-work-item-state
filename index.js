@@ -21,6 +21,7 @@ async function main () {
 	}
 	else if (env.branch_name.includes("bot")){
 		console.log("Checks are not being done for bot branches");
+		return;
 	}
 	else if (env.branch_name.includes("release") ||
 	    env.branch_name.includes("task") ||
