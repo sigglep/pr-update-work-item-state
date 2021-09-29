@@ -3,12 +3,14 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
+const version = "1.0"
 global.Headers = fetch.Headers;
 
 
 main();
 async function main () {
-  
+    console.log("VERSION " + version);
+	
     const env = process.env
     const context = github.context; 
 
@@ -31,6 +33,47 @@ async function main () {
     }
 }
 
+async function getWorkItemIdFromPrTitle(env) {
+	let h = new Headers();
+	let auth = 'token ' = env.gh_token;
+	h.append('Authorization', auth);
+	
+	try {
+		console.log("Getting work item iD from PR title");
+		const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;
+		
+		const response = await fetch(requestUrl, {
+			method: 'GET',
+			headers: h
+		});
+		const result = await response.json();
+		
+		var pullRequestTitle = result.title;
+		try {
+			var foundMatches = pullRequestTitle.match(/[(0-9)]*/g);
+			var workItemId = foundMatches[3];
+			console.log("Work item ID: " + workItemId);
+			return workItemId;
+		} catch (err) {
+			core.setFailed("Wrong PR name detected");
+		}
+	} catch (err) {
+		core.setFailed(err);
+	}
+}
+
+async function getWorkItemIdFromBranchName(env) {
+	var branchName = env.branch_name;
+	try {
+		var foundMatches = branchName.match(/([0-9]+)/g);
+		var workItemId = foundMatches[0];
+		console.log("Work item ID: " + workItemId);
+		return workItemId
+	} catch (err) {
+		core.setFailed("Wrong Branch name detected");
+	}
+}
+
 async function getWorkItemIdFromPrTitleOrBranchName(env) {
     let h = new Headers();
     let auth = 'token ' + env.gh_token;
@@ -38,25 +81,10 @@ async function getWorkItemIdFromPrTitleOrBranchName(env) {
     try {   
         if(env.pull_number != undefined && env.pull_number != "") {
             console.log("Getting work item ID from PR title");
-            const requestUrl = "https://api.github.com/repos/"+env.ghrepo_owner+"/"+env.ghrepo+"/pulls/"+env.pull_number;
-            const response= await fetch (requestUrl, {
-                method: 'GET', 
-                headers:h
-                })
-            const result = await response.json();
-
-            var pullRequestTitle = result.title;
-            var found = pullRequestTitle.match(/[(0-9)]*/g);
-            var workItemId = found[3];
-            console.log("WorkItem: " + workItemId);
-            return workItemId;
+            return await getWorkItemIdFromPrTitle(env);
         } else {
             console.log("Getting work item ID from BRANCH name");
-            var branchName = env.branch_name;
-            var found = branchName.match(/([0-9]+)/g);
-            var workItemId = found[0];
-            console.log("WorkItem: " + workItemId);
-            return workItemId;
+            return await getWorkItemIdFromBranchName(env);
         }
     } catch (err){
         core.setFailed(err);
