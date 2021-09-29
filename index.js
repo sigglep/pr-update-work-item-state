@@ -3,7 +3,7 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.0.6"
+const version = "1.0.7"
 global.Headers = fetch.Headers;
 
 
@@ -68,6 +68,8 @@ async function getWorkItemIdFromPrTitle(env) {
 		const result = await response.json();
 		
 		var pullRequestTitle = result.title;
+		console.log("PR title: " + pullRequestTitle);
+		
 		try {
 			var foundMatches = pullRequestTitle.match(/[(0-9)]*/g);
 			var workItemId = foundMatches[3];
