@@ -31,7 +31,6 @@ async function main () {
 	    process.env.branch_name.includes("refs/pull"))
 	{
 	    try {
-		console.log("PR Title = " + getPrTitle());
 		var prTitle = await getPrTitle();
 		if (prTitle.includes("Code cleanup") ||
 		    prTitle.includes("Swagger update")) {
