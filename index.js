@@ -18,9 +18,11 @@ async function main () {
 		console.log("Selected check doesn't work for master branch");
 		return;
 	}
-	else if (process.env.branch_name.includes("bot")){
-		console.log("Checks are not being done for bot branches");
-		return;
+	else if (process.env.branch_name.includes("code-cleanup") ||
+		 process.env.branch_name.includes("swagger-update") ||
+		 process.env.branch_name.includes("bot")){
+	    console.log("Checks are not being done for bot branches");
+	    return;
 	}
 	else if (process.env.branch_name.includes("release") ||
 	    process.env.branch_name.includes("task") ||
