@@ -3,7 +3,7 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.0.21"
+const version = "1.0.22"
 global.Headers = fetch.Headers;
 
 
@@ -75,14 +75,14 @@ async function getPrTitle() {
 		try {
 			var foundMatches = pullRequestTitle.match(/(Code cleanup)*/g);
 			var workItemId = foundMatches[0];
-			if (foundMatches.includes("Code cleanup"){
+			if (foundMatches.includes("Code cleanup")){
 			    console.log("PR title contains Code cleanup");
 			    return workItemId;
 		        }
 		
 			foundMatches = pullRequestTitle.match(/(Swagger update)*/g);
 			workItemId = foundMatches[0];
-			if (foundMatches.includes("Swagger update"){
+			if (foundMatches.includes("Swagger update")){
 			    console.log("PR title contains Swagger update");
 			    return workItemId;
 		        }
