@@ -70,26 +70,10 @@ async function getPrTitle() {
 		});
 		const result = await response.json();
 		
-		var pullRequestTitle = result.title;
-		
 		try {
-			var foundMatches = pullRequestTitle.match(/(Code cleanup)*/g);
-			var workItemId = foundMatches[0];
-			if (foundMatches.includes("Code cleanup")){
-			    console.log("PR title contains Code cleanup");
-			    return workItemId;
-		        }
-		
-			foundMatches = pullRequestTitle.match(/(Swagger update)*/g);
-			workItemId = foundMatches[0];
-			if (foundMatches.includes("Swagger update")){
-			    console.log("PR title contains Swagger update");
-			    return workItemId;
-		        }
-	
-			return "";
+			return result.title;
 		} catch (err) {
-			core.setFailed("Wrong PR name detected");
+			return "";
 		}
 	} catch (err) {
 		core.setFailed(err.toString());
