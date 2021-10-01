@@ -3,7 +3,7 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.0.22"
+const version = "1.0.23"
 global.Headers = fetch.Headers;
 
 
@@ -32,7 +32,7 @@ async function main () {
 	{
 	    try {
 		console.log("PR Title = " + getPrTitle());
-		var prTitle = getPrTitle();
+		var prTitle = await getPrTitle();
 		if (prTitle.includes("Code cleanup") ||
 		    prTitle.includes("Swagger update")) {
 			console.log("Bot branches are not being checked towards Azure Boards");
