@@ -31,8 +31,15 @@ async function main () {
 	    process.env.branch_name.includes("refs/pull"))
 	{
 	    try {
+		var prTitle = getPrTitle();
+		if (prTitle.includes("Code cleanup") ||
+		    prTitle.includes("Swagger update")) {
+			console.log("Bot branches are not being checked towards Azure Boards");
+			return;
+		}
+		    
 		var workItemId = "";
-		workItemId = await getWorkItemIdFromPrTitleOrBranchName();
+		var workItemId = await getWorkItemIdFromPrTitleOrBranchName();
 		await updateWorkItem(workItemId);
 		console.log("Work item " + workItemId + " was updated successfully");
 	    } catch (err) {
@@ -49,6 +56,23 @@ function getRequestHeaders(){
 	let auth = 'token ' + process.env.gh_token;
 	h.append('Authorization', auth);
 	return h;
+}
+
+async function getPrTitle() {
+	try {
+		console.log("Getting PR title");
+		const requestUrl = "https://api.github.com/repos/"+process.env.ghrepo_owner+"/"+process.env.ghrepo+"/pulls/"+process.env.pull_number;
+		
+		const response = await fetch(requestUrl, {
+			method: 'GET',
+			headers: getRequestHeaders()
+		});
+		const result = await response.json();
+		
+		return result.title;
+	} catch (err) {
+		core.setFailed(err.toString());
+	}
 }
 
 async function getWorkItemIdFromPrTitle() {
