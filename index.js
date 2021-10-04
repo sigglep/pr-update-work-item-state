@@ -21,6 +21,7 @@ async function main () {
 	    return;
 	}
 	else if (isMerged()) {
+		console.log("Detected that the branch is merged");
 		var workItemId = "";
 		var workItemId = await getWorkItemIdFromPrTitle();
 		await updateWorkItem(workItemId);
