@@ -3,7 +3,7 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.0.23"
+const version = "1.0.24"
 global.Headers = fetch.Headers;
 
 
@@ -14,11 +14,7 @@ async function main () {
     const context = github.context; 
     let vm = getValuesFromPayload(github.context.payload);
 	
-	if (process.env.branch_name.includes("master")){
-		console.log("Selected check doesn't work for master branch");
-		return;
-	}
-	else if (process.env.branch_name.includes("code-cleanup") ||
+	if (process.env.branch_name.includes("code-cleanup") ||
 		 process.env.branch_name.includes("swagger-update") ||
 		 process.env.branch_name.includes("bot")){
 	    console.log("Checks are not being done for bot branches");
