@@ -32,8 +32,9 @@ async function main () {
 	{
 	    try {
 		var prTitle = await getPrTitle();
-		if (prTitle.includes("Code cleanup") ||
-		    prTitle.includes("Swagger update")) {
+		if (typeof(prTitle) != typeof(undefined) && (
+		    	prTitle.includes("Code cleanup") ||
+		    	prTitle.includes("Swagger update"))) {
 			console.log("Bot branches are not being checked towards Azure Boards");
 			return;
 		}
