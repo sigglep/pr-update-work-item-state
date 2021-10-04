@@ -3,7 +3,7 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.0.25"
+const version = "1.0.26"
 global.Headers = fetch.Headers;
 
 
@@ -20,9 +20,9 @@ async function main () {
 	    console.log("Checks are not being done for bot branches");
 	    return;
 	}
-	else if (process.env.branch_name.includes("master")) {
+	else if (isMerged()) {
 		var workItemId = "";
-		var workItemId = await getWorkItemIdFromPrTitleOrBranchName();
+		var workItemId = await getWorkItemIdFromPrTitle();
 		await updateWorkItem(workItemId);
 		console.log("Work item " + workItemId + " was updated successfully");
 		
