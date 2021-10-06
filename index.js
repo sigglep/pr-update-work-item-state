@@ -3,7 +3,7 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.0.27"
+const version = "1.0.28"
 global.Headers = fetch.Headers;
 
 
@@ -50,6 +50,10 @@ async function main () {
 	    } catch (err) {
 		core.setFailed(err.toString());
 	    }
+	}
+	else if (process.env.branch_name.includes("master")){
+		console.log("master branch push is not handled by this automation");
+		return;
 	}
 	else {
 		core.setFailed("Wrong branch name detected (" + process.env.branch_name + "), please rename the branch to contain work item ID");
