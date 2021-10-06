@@ -3,7 +3,7 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.1.0"
+const version = "1.1.1"
 global.Headers = fetch.Headers;
 
 
@@ -35,6 +35,11 @@ async function main () {
 		}
 	} else {
 		console.log("Branch event detected");
+		
+		if (process.env.branch_name.includes("master")){
+			coonsole.log("Automation is not handling pushed towards master");
+			return;
+		}
 		
 		var workItemId = await getWorkItemIdFromBranchName();
 		await updateWorkItem(workItemId);
