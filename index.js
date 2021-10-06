@@ -3,19 +3,16 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.1.3"
+const version = "1.1.4"
 global.Headers = fetch.Headers;
-
 
 main();
 async function main () {
 	try {
-	    console.log("VERSION " + version);
+	        console.log("VERSION " + version);
 
-	    const context = github.context; 
-	    let vm = getValuesFromPayload(github.context.payload);
-
-		console.log(JSON.stringify(process.env));
+	        const context = github.context; 
+	        let vm = getValuesFromPayload(github.context.payload);
 
 		if (process.env.GITHUB_EVENT_NAME.includes("pull_request")){
 			console.log("PR event detected");
@@ -79,29 +76,16 @@ async function getPrTitle() {
 	}
 }
 
-async function getWorkItemIdFromPrTitle() {
+async function getWorkItemIdFromPrTitle() {		
+	var pullRequestTitle = await getPrTitle();
+
 	try {
-		console.log("Getting work item ID from PR title");
-		const requestUrl = "https://api.github.com/repos/"+process.env.ghrepo_owner+"/"+process.env.ghrepo+"/pulls/"+process.env.pull_number;
-		
-		const response = await fetch(requestUrl, {
-			method: 'GET',
-			headers: getRequestHeaders()
-		});
-		const result = await response.json();
-		
-		var pullRequestTitle = result.title;
-		
-		try {
-			var foundMatches = pullRequestTitle.match(/[(0-9)]*/g);
-			var workItemId = foundMatches[3];
-			console.log("Work item ID: " + workItemId);
-			return workItemId;
-		} catch (err) {
-			core.setFailed("Wrong PR name detected");
-		}
+		var foundMatches = pullRequestTitle.match(/[(0-9)]*/g);
+		var workItemId = foundMatches[3];
+		console.log("Work item ID: " + workItemId);
+		return workItemId;
 	} catch (err) {
-		core.setFailed(err.toString());
+		core.setFailed("Wrong PR name detected");
 	}
 }
 
@@ -114,16 +98,6 @@ function getWorkItemIdFromBranchName() {
 		return workItemId
 	} catch (err) {
 		core.setFailed("Wrong Branch name detected");
-	}
-}
-
-async function getWorkItemIdFromPrTitleOrBranchName() {
-	if(process.env.pull_number != undefined && process.env.pull_number != "") {
-	    console.log("Getting work item ID from PR title");
-	    return await getWorkItemIdFromPrTitle();
-	} else {
-	    console.log("Getting work item ID from BRANCH name");
-	    return getWorkItemIdFromBranchName();
 	}
 }
 
