@@ -3,7 +3,7 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.0.28"
+const version = "1.1.0"
 global.Headers = fetch.Headers;
 
 
@@ -16,27 +16,9 @@ async function main () {
 	
 	console.log(JSON.stringify(process.env));
 	
-	if (process.env.branch_name.includes("code-cleanup") ||
-		 process.env.branch_name.includes("swagger-update") ||
-		 process.env.branch_name.includes("bot")){
-	    console.log("Checks are not being done for bot branches");
-	    return;
-	}
-	else if (isMerged() == true) {
-		console.log("Detected that the branch is merged");
-		var workItemId = "";
-		var workItemId = await getWorkItemIdFromPrTitle();
-		await updateWorkItem(workItemId);
-		console.log("Work item " + workItemId + " was updated successfully");
+	if (process.env.GITHUB_EVENT_NAME.includes("pull_request")){
+		console.log("PR event detected");
 		
-	}
-	else if (process.env.branch_name.includes("release") ||
-	    process.env.branch_name.includes("task") ||
-	    process.env.branch_name.includes("bug") ||
-	    process.env.branch_name.includes("change-request") ||
-	    process.env.branch_name.includes("refs/pull"))
-	{
-	    try {
 		var prTitle = await getPrTitle();
 		if (typeof(prTitle) != typeof(undefined) && (
 		    	prTitle.includes("Code cleanup") ||
@@ -44,22 +26,19 @@ async function main () {
 			console.log("Bot branches are not being checked towards Azure Boards");
 			return;
 		}
-		    
-		var workItemId = "";
+		
+		try {
+			var workItemId = await getWorkItemIdFromPrTitle();
+			await updateWorkItem(workItemId);
+		} catch (err) {
+			core.setFailed("Couldn't get work item ID from PR title, adjust the PR title");
+		}
+	} else {
+		console.log("Branch event detected");
 		var workItemId = await getWorkItemIdFromPrTitleOrBranchName();
 		await updateWorkItem(workItemId);
-		console.log("Work item " + workItemId + " was updated successfully");
-	    } catch (err) {
-		core.setFailed(err.toString());
-	    }
 	}
-	else if (process.env.branch_name.includes("master")){
-		console.log("master branch push is not handled by this automation");
-		return;
-	}
-	else {
-		core.setFailed("Wrong branch name detected (" + process.env.branch_name + "), please rename the branch to contain work item ID");
-	}
+	console.log("Work item " + workItemId + " was updated successfully");
 }
 
 function getRequestHeaders(){
