@@ -14,6 +14,8 @@ async function main () {
     const context = github.context; 
     let vm = getValuesFromPayload(github.context.payload);
 	
+	console.log(JSON.stringify(process.env));
+	
 	if (process.env.branch_name.includes("code-cleanup") ||
 		 process.env.branch_name.includes("swagger-update") ||
 		 process.env.branch_name.includes("bot")){
