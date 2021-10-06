@@ -35,7 +35,8 @@ async function main () {
 		}
 	} else {
 		console.log("Branch event detected");
-		var workItemId = await getWorkItemIdFromPrTitleOrBranchName();
+		
+		var workItemId = await getWorkItemIdFromBranchName();
 		await updateWorkItem(workItemId);
 	}
 	console.log("Work item " + workItemId + " was updated successfully");
