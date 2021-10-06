@@ -3,48 +3,52 @@ const azureDevOpsHandler = require(`azure-devops-node-api`);
 const core = require(`@actions/core`);
 const github = require(`@actions/github`);
 const fetch = require("node-fetch");
-const version = "1.1.1"
+const version = "1.1.2"
 global.Headers = fetch.Headers;
 
 
 main();
 async function main () {
-    console.log("VERSION " + version);
-	
-    const context = github.context; 
-    let vm = getValuesFromPayload(github.context.payload);
-	
-	console.log(JSON.stringify(process.env));
-	
-	if (process.env.GITHUB_EVENT_NAME.includes("pull_request")){
-		console.log("PR event detected");
-		
-		var prTitle = await getPrTitle();
-		if (typeof(prTitle) != typeof(undefined) && (
-		    	prTitle.includes("Code cleanup") ||
-		    	prTitle.includes("Swagger update"))) {
-			console.log("Bot branches are not being checked towards Azure Boards");
-			return;
-		}
-		
-		try {
-			var workItemId = await getWorkItemIdFromPrTitle();
+	try {
+	    console.log("VERSION " + version);
+
+	    const context = github.context; 
+	    let vm = getValuesFromPayload(github.context.payload);
+
+		console.log(JSON.stringify(process.env));
+
+		if (process.env.GITHUB_EVENT_NAME.includes("pull_request")){
+			console.log("PR event detected");
+
+			var prTitle = await getPrTitle();
+			if (typeof(prTitle) != typeof(undefined) && (
+				prTitle.includes("Code cleanup") ||
+				prTitle.includes("Swagger update"))) {
+				console.log("Bot branches are not being checked towards Azure Boards");
+				return;
+			}
+
+			try {
+				var workItemId = await getWorkItemIdFromPrTitle();
+				await updateWorkItem(workItemId);
+			} catch (err) {
+				core.setFailed("Couldn't get work item ID from PR title, adjust the PR title");
+			}
+		} else {
+			console.log("Branch event detected");
+
+			if (process.env.branch_name.includes("master")){
+				coonsole.log("Automation is not handling pushed towards master");
+				return;
+			}
+
+			var workItemId = await getWorkItemIdFromBranchName();
 			await updateWorkItem(workItemId);
-		} catch (err) {
-			core.setFailed("Couldn't get work item ID from PR title, adjust the PR title");
 		}
-	} else {
-		console.log("Branch event detected");
-		
-		if (process.env.branch_name.includes("master")){
-			coonsole.log("Automation is not handling pushed towards master");
-			return;
-		}
-		
-		var workItemId = await getWorkItemIdFromBranchName();
-		await updateWorkItem(workItemId);
+		console.log("Work item " + workItemId + " was updated successfully");
+	} catch (err) {
+		core.setFailed(err.toString());
 	}
-	console.log("Work item " + workItemId + " was updated successfully");
 }
 
 function getRequestHeaders(){
