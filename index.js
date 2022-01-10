@@ -30,6 +30,7 @@ async function main () {
 				await updateWorkItem(workItemId);
 			} catch (err) {
 				core.setFailed("Couldn't get work item ID from PR title, adjust the PR title");
+				core.setFailed(err.toString());
 			}
 		} else {
 			console.log("Branch event detected");
