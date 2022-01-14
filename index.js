@@ -254,6 +254,8 @@ async function updateWorkItem(workItemId) {
 	} else if (workItem.fields["System.State"] == process.env.propenstate && await isMerged() == false) {
 	    console.log("WorkItem is already in a state of PR open, will not update.");
 	    return;
+	} else if (workItem.fields["System.WorkItemType"] == "Product Backlog Item") {
+		console.log("Product backlog item is not going to be automatically updated - needs to be updated manually.")
 	}
 	else {        
 	    if (await isMerged() == true) {
