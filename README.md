@@ -1,5 +1,7 @@
 ### Sample WorkFlow File 
+ 
 
+Fork of @MarcinGadomski94's fantastic project. Feel free to suggest changes here. 
 ```yml
 name: Update work item state when PR is merged, opened, closed or when branch is created
 
