@@ -1,7 +1,7 @@
 ### Sample WorkFlow File 
  
 
-Fork of @MarcinGadomski94's fantastic project. Feel free to suggest changes here. 
+Fork of @MarcinGadomski94's fantastic project (which is already a fork of https://github.com/CanarysAutomations/pr-update-work-item-state). Feel free to suggest changes here. 
 ```yml
 name: Update work item state when PR is merged, opened, closed or when branch is created
 
