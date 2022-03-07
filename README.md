@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Test workflow
     steps:       
-    - uses: MarcinGadomski94/pr-update-work-item-state@master
+    - uses: sigglep/pr-update-work-item-state@master
       env: 
         gh_token : '${{ secrets.GH_TOKEN }}'   
         ado_token: '${{ secrets.ADO_PERSONAL_ACCESS_TOKEN }}'
