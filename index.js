@@ -35,7 +35,7 @@ async function main () {
 		} else {
 			console.log("Branch event detected");
 
-			if (process.env.branch_name.includes("master")){
+			if (process.env.branch_name.includes("master") || process.env.branch_name.includes("main")){
 				console.log("Automation is not handling pushed towards master");
 				return;
 			}
