@@ -29,7 +29,7 @@ async function main () {
 				var workItemId = await getWorkItemIdFromPrTitle();
 				await updateWorkItem(workItemId);
 			} catch (err) {
-				core.setFailed("Couldn't get work item ID from adjust the PR title");
+				core.setFailed("PR title format is wrong. Make sure it starts from AB#<ticket_number>");
 				core.setFailed(err.toString());
 			}
 		} else {
@@ -88,7 +88,7 @@ async function getWorkItemIdFromPrTitle() {
 		console.log("Work item ID: " + workItemId);
 		return workItemId;
 	} catch (err) {
-		core.setFailed("Wrong PR name detected");
+		core.setFailed("PR title format is wrong. Make sure it starts from AB#<ticket_number>");
 	}
 }
 
@@ -97,11 +97,11 @@ function getWorkItemIdFromBranchName() {
 	try {
 		var foundMatches = branchName.match(/([0-9]+)/g);
 		console.log("Found matches on branch name" + foundMatches);
-		var workItemId = foundMatches[0];
+		var workItemId = foundMatches[3];
 		console.log("Work item ID: " + workItemId);
 		return workItemId;
 	} catch (err) {
-		core.setFailed("Wrong Branch name detected");
+		core.setFailed("Branch name format is wrong. Make sure it starts from AB#<ticket_number>");
 	}
 }
 
