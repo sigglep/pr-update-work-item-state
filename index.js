@@ -69,7 +69,7 @@ async function getPrTitle() {
 		const result = await response.json();
 		
 		try {
-			console.log("Found PR title:" + result.title)
+			console.log(result.title)
 			return result.title;
 		} catch (err) {
 			return "";
