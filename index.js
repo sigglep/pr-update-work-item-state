@@ -83,6 +83,7 @@ async function getWorkItemIdFromPrTitle() {
 
 	try {
 		var foundMatches = pullRequestTitle.match(/[(0-9)]*/g);
+		console.log("Found matches on PR title" + foundMatches);
 		var workItemId = foundMatches[3];
 		console.log("Work item ID: " + workItemId);
 		return workItemId;
@@ -95,6 +96,7 @@ function getWorkItemIdFromBranchName() {
 	var branchName = process.env.branch_name;
 	try {
 		var foundMatches = branchName.match(/([0-9]+)/g);
+		console.log("Found matches on branch name" + foundMatches);
 		var workItemId = foundMatches[0];
 		console.log("Work item ID: " + workItemId);
 		return workItemId;
@@ -243,7 +245,7 @@ async function handleOpenBranch(workItemId){
 }
 
 async function updateWorkItem(workItemId) {
-	console.log(workItemId);
+	console.log("Updating work item with work item ID: " + workItemId);
 	let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(process.env.ado_token);
 	let connection = new azureDevOpsHandler.WebApi("https://dev.azure.com/" + process.env.ado_organization, authHandler);
 	let client = await connection.getWorkItemTrackingApi();
