@@ -243,11 +243,11 @@ async function handleOpenBranch(workItemId){
 }
 
 async function updateWorkItem(workItemId) {
+	console.log(workItemId);
 	let authHandler = azureDevOpsHandler.getPersonalAccessTokenHandler(process.env.ado_token);
 	let connection = new azureDevOpsHandler.WebApi("https://dev.azure.com/" + process.env.ado_organization, authHandler);
 	let client = await connection.getWorkItemTrackingApi();
 	var workItem = await client.getWorkItem(workItemId);
-	console.log(client);
 	console.log("Detected Work Item Type: " + workItem.fields["System.WorkItemType"])
 	
 	if (workItem.fields["System.State"] == process.env.closedstate)
