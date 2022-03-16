@@ -97,7 +97,7 @@ function getWorkItemIdFromBranchName() {
 		var foundMatches = branchName.match(/([0-9]+)/g);
 		var workItemId = foundMatches[0];
 		console.log("Work item ID: " + workItemId);
-		return workItemId
+		return workItemId;
 	} catch (err) {
 		core.setFailed("Wrong Branch name detected");
 	}
