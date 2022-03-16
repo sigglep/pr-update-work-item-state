@@ -29,8 +29,7 @@ async function main () {
 				var workItemId = await getWorkItemIdFromPrTitle();
 				await updateWorkItem(workItemId);
 			} catch (err) {
-				core.setFailed("Couldn't get work item ID from 
-					       , adjust the PR title");
+				core.setFailed("Couldn't get work item ID from adjust the PR title");
 				core.setFailed(err.toString());
 			}
 		} else {
