@@ -67,9 +67,9 @@ async function getPrTitle() {
 			headers: getRequestHeaders()
 		});
 		const result = await response.json();
+		console.log(result)
 		
 		try {
-			console.log(result.title)
 			return result.title;
 		} catch (err) {
 			return "";
